@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ "Edit Portfolio" if portfolio else "Create New Portfolio" }} | Portfolio Forge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/builder.css') }}">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('forge_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <style>
+        .form-page-container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        .form-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .form-header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-card {
+            padding: clamp(28px, 5vw, 44px);
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.7), 0 0 32px rgba(56, 189, 248, 0.06);
+        }
+
+        .form-actions-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <div class="form-page-container">
+        <!-- Topbar -->
+        <nav class="form-topbar" aria-label="Main Navigation">
+            <a class="brand" href="{{ url_for('main.home') }}">
+                <span class="brand-mark">P</span>
+                <span>Portfolio Forge</span>
+            </a>
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle theme" title="Switch theme">
+                    <i class="fa-solid fa-moon theme-icon-dark"></i>
+                    <i class="fa-solid fa-sun theme-icon-light"></i>
+                </button>
+                <a href="{{ url_for('main.dashboard') }}" class="btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">
+                    <i class="fa-solid fa-gauge"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="logout-link" href="{{ url_for('auth.logout') }}">
+                    Sign out
+                </a>
+            </div>
+        </nav>
+
+        <!-- Header -->
+        <header style="margin-bottom: 32px;">
+            <div class="form-header-badge">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>{{ "02 / Continue Building" if portfolio else "01 / New Workspace" }}</span>
+            </div>
+            <h1 style="font-size: clamp(1.8rem, 3.2vw, 2.4rem); font-weight: 800; margin-bottom: 10px;">
+                {{ "Keep Shaping Your Portfolio" if portfolio else "Start a New Portfolio" }}
+            </h1>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                Give this portfolio a clear identity. Your reusable profile information will automatically sync and can be customized at any time.
+            </p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack" role="alert">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}" data-flash-toast>
+                            <div class="flash-icon">
+                                {% if category == 'success' %}
+                                    <i class="fa-solid fa-circle-check"></i>
+                                {% elif category == 'error' %}
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info"></i>
+                                {% endif %}
+                            </div>
+                            <span class="flash-text">{{ message }}</span>
+                            <button type="button" class="flash-close-btn" aria-label="Close notification" onclick="var p=this.closest('.flash-message'); if(p){ p.classList.add('flash-dismissed'); setTimeout(function(){p.remove();},350); }">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Form Card -->
+        <div class="form-card">
+            <form method="post" style="display: flex; flex-direction: column; gap: 24px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <div class="form-group-field">
+                    <label for="name">
+                        Portfolio Name <span class="required" style="color: var(--accent-cyan);">*</span>
+                    </label>
+                    <input class="form-input-control" id="name" name="name" required maxlength="150" value="{{ portfolio.name if portfolio else '' }}" placeholder="e.g. Senior Full Stack Portfolio 2026" autofocus>
+                    <small style="color: var(--text-muted); font-size: 0.78rem;">Choose a memorable title to distinguish this design version.</small>
+                </div>
+
+                <div class="form-group-field">
+                    <label for="status">Publication Status</label>
+                    <select class="form-input-control" id="status" name="status">
+                        <option value="draft" {% if not portfolio or portfolio.status == 'draft' %}selected{% endif %}>Draft (In Development)</option>
+                        <option value="published" {% if portfolio and portfolio.status == 'published' %}selected{% endif %}>Published (Live)</option>
+                        <option value="archived" {% if portfolio and portfolio.status == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                </div>
+
+                <div class="form-actions-row">
+                    <button class="btn-primary" type="submit" style="padding: 12px 24px; font-size: 0.95rem;">
+                        <span>{{ "Save Changes" if portfolio else "Create Portfolio" }}</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <a class="btn-secondary" href="{{ url_for('main.dashboard') }}" style="padding: 12px 20px; font-size: 0.95rem;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll("[data-flash-toast]").forEach((toast) => {
+            setTimeout(() => {
+                toast.classList.add("flash-dismissed");
+                setTimeout(() => toast.remove(), 350);
+            }, 4000);
+        });
+
+        const themeToggleBtn = document.getElementById("theme-toggle-btn");
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener("click", () => {
+                const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+                const nextTheme = currentTheme === "dark" ? "light" : "dark";
+                document.documentElement.setAttribute("data-theme", nextTheme);
+                localStorage.setItem("forge_theme", nextTheme);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+/* Design Themes & Aesthetic System */
+
+/* 1. Modern / Professional Style */
+.style-modern .project-card,
+.style-professional .project-card,
+.style-modern .experience-card,
+.style-professional .experience-card,
+.style-modern .education-card,
+.style-professional .education-card,
+.style-modern .service-card,
+.style-professional .service-card,
+.style-modern .certification-card,
+.style-professional .certification-card,
+.style-modern .about-card,
+.style-professional .about-card {
+    background: var(--pf-card-bg);
+    border: 1px solid var(--pf-border);
+    border-radius: var(--pf-radius);
+    box-shadow: var(--pf-shadow);
+}
+
+/* 2. Glassmorphism Style */
+.style-glassmorphism .project-card,
+.style-glassmorphism .experience-card,
+.style-glassmorphism .education-card,
+.style-glassmorphism .service-card,
+.style-glassmorphism .certification-card,
+.style-glassmorphism .about-card,
+.style-glassmorphism .contact-card-inner,
+.style-glassmorphism .skill-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--pf-radius);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+.theme-light.style-glassmorphism .project-card,
+.theme-light.style-glassmorphism .experience-card,
+.theme-light.style-glassmorphism .education-card,
+.theme-light.style-glassmorphism .service-card,
+.theme-light.style-glassmorphism .certification-card,
+.theme-light.style-glassmorphism .about-card,
+.theme-light.style-glassmorphism .contact-card-inner,
+.theme-light.style-glassmorphism .skill-item {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
+}
+
+/* 3. Futuristic & Cyberpunk Style */
+.style-futuristic,
+.style-cyberpunk {
+    --pf-border: color-mix(in srgb, var(--pf-accent) 30%, rgba(255, 255, 255, 0.12));
+}
+
+.style-futuristic .composition-hero h1,
+.style-cyberpunk .composition-hero h1 {
+    text-shadow: 0 0 32px color-mix(in srgb, var(--pf-accent) 55%, transparent);
+}
+
+.style-futuristic .project-card,
+.style-cyberpunk .project-card,
+.style-futuristic .experience-card,
+.style-cyberpunk .experience-card,
+.style-futuristic .education-card,
+.style-cyberpunk .education-card,
+.style-futuristic .service-card,
+.style-cyberpunk .service-card,
+.style-futuristic .certification-card,
+.style-cyberpunk .certification-card,
+.style-futuristic .about-card,
+.style-cyberpunk .about-card,
+.style-futuristic .contact-card-inner,
+.style-cyberpunk .contact-card-inner {
+    background: color-mix(in srgb, var(--pf-card-bg) 85%, var(--pf-accent) 15%);
+    border: 1px solid color-mix(in srgb, var(--pf-accent) 35%, var(--pf-border));
+    box-shadow: 0 0 24px -6px color-mix(in srgb, var(--pf-accent) 25%, transparent);
+}
+
+.style-futuristic .project-card:hover,
+.style-cyberpunk .project-card:hover,
+.style-futuristic .service-card:hover,
+.style-cyberpunk .service-card:hover {
+    border-color: var(--pf-accent);
+    box-shadow: 0 0 36px color-mix(in srgb, var(--pf-accent) 55%, transparent);
+}
+
+/* 4. Creative & Playful Style */
+.style-creative .project-card,
+.style-playful .project-card,
+.style-creative .experience-card,
+.style-playful .experience-card,
+.style-creative .about-card,
+.style-playful .about-card,
+.style-creative .contact-card-inner,
+.style-playful .contact-card-inner {
+    border-radius: 28px;
+    border: 2px solid var(--pf-border);
+}
+
+.style-creative .skill-item,
+.style-playful .skill-item {
+    border-radius: 999px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--pf-accent) 15%, transparent), color-mix(in srgb, var(--pf-secondary) 15%, transparent));
+}
+
+/* 5. Editorial Style */
+.style-editorial .portfolio-hero h1 {
+    font-weight: 300;
+    letter-spacing: -0.04em;
+}
+
+.style-editorial .project-card {
+    border-top: 1px solid var(--pf-border);
+    border-inline: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding-inline: 0;
+}
+
+.style-editorial .project-card:hover {
+    transform: none;
+    border-top-color: var(--pf-accent);
+}
+
+/* 6. Tech & Terminal Style */
+.style-tech .project-card,
+.style-terminal .project-card,
+.style-tech .experience-card,
+.style-terminal .experience-card,
+.style-tech .service-card,
+.style-terminal .service-card,
+.style-tech .about-card,
+.style-terminal .about-card {
+    border-radius: 4px;
+    border: 1px solid color-mix(in srgb, var(--pf-accent) 35%, var(--pf-border));
+    font-family: var(--pf-font-body);
+}
+
+.style-tech .section-kicker:before,
+.style-terminal .section-kicker:before {
+    content: "> ";
+    color: var(--pf-accent);
+    font-weight: 700;
+}
+
+/* Effects */
+.effects-glow .project-card,
+.effects-glow .service-card,
+.effects-glow .certification-card {
+    box-shadow: 0 0 28px color-mix(in srgb, var(--pf-accent) 22%, transparent);
+}
+
+.effects-elevated .project-card,
+.effects-elevated .experience-card,
+.effects-elevated .about-card {
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+}
+
+.effects-borders .project-card,
+.effects-borders .experience-card,
+.effects-borders .service-card {
+    border-width: 2px;
+    border-color: color-mix(in srgb, var(--pf-accent) 35%, var(--pf-border));
+}
+
+/* Dark Theme Polish */
+.theme-dark .portfolio-intro,
+.theme-dark .project-description,
+.theme-dark .experience-description,
+.theme-dark .education-description,
+.theme-dark .about-card p {
+    color: #94a3b8;
+}
+
+.theme-dark .skill-item {
+    background: color-mix(in srgb, var(--pf-accent) 12%, #0f172a);
+    color: #e2e8f0;
+}

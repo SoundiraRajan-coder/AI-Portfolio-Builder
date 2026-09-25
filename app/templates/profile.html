@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Manage your reusable professional profile">
+    <title>Profile | Portfolio Forge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('forge_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <main class="page-shell profile-shell">
+        <nav class="topbar" aria-label="Profile navigation">
+            <a class="brand" href="{{ url_for('main.home') }}">
+                <span class="brand-mark" aria-hidden="true">P</span>
+                <span>Portfolio Forge</span>
+            </a>
+            <div class="topbar-actions">
+                <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle theme" title="Switch theme">
+                    <i class="fa-solid fa-moon theme-icon-dark"></i>
+                    <i class="fa-solid fa-sun theme-icon-light"></i>
+                </button>
+                <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                <a class="logout-link" href="{{ url_for('auth.logout') }}">Sign out</a>
+            </div>
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack" role="alert">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}" data-flash-toast>
+                            <div class="flash-icon">
+                                {% if category == 'success' %}
+                                    <i class="fa-solid fa-circle-check"></i>
+                                {% elif category == 'error' %}
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info"></i>
+                                {% endif %}
+                            </div>
+                            <span class="flash-text">{{ message }}</span>
+                            <button type="button" class="flash-close-btn" aria-label="Close notification" onclick="var p=this.closest('.flash-message'); if(p){ p.classList.add('flash-dismissed'); setTimeout(function(){p.remove();},350); }">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <header class="profile-heading">
+            <div>
+                <p class="eyebrow">Reusable professional information</p>
+                <h1>Your profile, <span>your story.</span></h1>
+                <p class="hero-text">Keep your core information here once, then reuse it across every portfolio you create.</p>
+            </div>
+        </header>
+
+        <section class="profile-section profile-details-section" aria-labelledby="details-title">
+            <div class="section-heading profile-section-heading">
+                <div><p class="eyebrow">01 / Identity</p><h2 id="details-title">Profile details</h2></div>
+                <span class="section-note">Email is managed by Google</span>
+            </div>
+            <form class="profile-form details-form" method="post" action="{{ url_for('profile.update_details') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="photo-field">
+                    <div class="photo-preview">
+                        {% if user.avatar_url %}<img data-avatar-preview src="{{ user.avatar_url }}" alt="">{% else %}<span data-avatar-initial>{{ (user.display_name or user.email)[0]|upper }}</span>{% endif %}
+                    </div>
+                    <div><label for="avatar_url">Profile photo URL: </label><input id="avatar_url" name="avatar_url" type="url" maxlength="500" placeholder="https://..." value="{{ user.avatar_url }}" data-avatar-input><p class="field-help">Use a public image URL.</p></div>
+                </div>
+                <div class="form-grid">
+                    <div class="field"><label for="display_name">Full name <span>*</span></label><input id="display_name" name="display_name" required maxlength="150" value="{{ user.display_name }}"></div>
+                    <div class="field"><label for="email">Email</label><input id="email" type="email" value="{{ user.email }}" disabled><p class="field-help">Your Google account email cannot be edited here.</p></div>
+                    <div class="field"><label for="headline">Professional title</label><input id="headline" name="headline" maxlength="180" value="{{ user.headline }}" placeholder="Product designer, developer, researcher..."></div>
+                    <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" maxlength="40" value="{{ user.phone }}"></div>
+                    <div class="field"><label for="location">Location</label><input id="location" name="location" maxlength="150" value="{{ user.location }}" placeholder="City, Country"></div>
+                    <div class="field field-wide"><label for="bio">Short bio</label><textarea id="bio" name="bio" maxlength="2000" rows="4" placeholder="A concise introduction to your work...">{{ user.bio }}</textarea></div>
+                </div>
+                <div class="social-grid">
+                    <div class="field"><label for="github_url">GitHub</label><input id="github_url" name="github_url" type="url" maxlength="500" value="{{ user.github_url }}" placeholder="https://github.com/you"></div>
+                    <div class="field"><label for="linkedin_url">LinkedIn</label><input id="linkedin_url" name="linkedin_url" type="url" maxlength="500" value="{{ user.linkedin_url }}" placeholder="https://linkedin.com/in/you"></div>
+                    <div class="field"><label for="website_url">Personal website</label><input id="website_url" name="website_url" type="url" maxlength="500" value="{{ user.website_url }}" placeholder="https://your-site.com"></div>
+                </div>
+                <button class="primary-button form-submit" type="submit">Save profile details <span aria-hidden="true">&#8594;</span></button>
+            </form>
+        </section>
+
+        <section class="profile-section" aria-labelledby="skills-title">
+            <div class="section-heading profile-section-heading"><div><p class="eyebrow">02 / Capabilities</p><h2 id="skills-title">Skills</h2></div><span class="section-note">{{ skills|length }} saved</span></div>
+            <div class="entry-layout">
+                <form class="profile-form add-form" method="post" action="{{ url_for('profile.create_profile_item', kind='skills') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <h3>Add a skill</h3><div class="form-grid"><div class="field"><label for="skill-name">Skill name <span>*</span></label><input id="skill-name" name="name" required maxlength="100" placeholder="Python"></div><div class="field"><label for="skill-category">Category</label><input id="skill-category" name="category" maxlength="100" placeholder="Languages"></div><div class="field"><label for="skill-proficiency">Proficiency</label><select id="skill-proficiency" name="proficiency"><option value="">Choose level</option><option value="1">1 / Familiar</option><option value="2">2 / Developing</option><option value="3">3 / Capable</option><option value="4">4 / Strong</option><option value="5">5 / Expert</option></select></div></div><button class="secondary-button" type="submit">Add skill</button></form>
+                <div class="entry-list">{% for item in skills %}<details class="profile-entry"><summary><span>{{ item.name }}</span><small>{{ item.category or 'Skill' }}{% if item.proficiency %} / {{ item.proficiency }}/5{% endif %}</small></summary><form class="profile-form entry-form" method="post" action="{{ url_for('profile.edit_profile_item', kind='skills', item_id=item.id) }}"><div class="form-grid"><div class="field"><label>Skill name</label><input name="name" required maxlength="100" value="{{ item.name }}"></div><div class="field"><label>Category</label><input name="category" maxlength="100" value="{{ item.category or '' }}"></div><div class="field"><label>Proficiency</label><select name="proficiency"><option value="">Choose level</option>{% for level in range(1, 6) %}<option value="{{ level }}" {% if item.proficiency == level %}selected{% endif %}>{{ level }} / 5</option>{% endfor %}</select></div></div><div class="entry-actions"><button class="secondary-button" type="submit">Save changes</button></form><form method="post" action="{{ url_for('profile.remove_profile_item', kind='skills', item_id=item.id) }}" data-delete-form><button class="danger-button" type="submit">Delete</button></form></div></details>{% else %}<p class="empty-state">No skills added yet.</p>{% endfor %}</div>
+            </div>
+        </section>
+
+        <section class="profile-section" aria-labelledby="education-title">
+            <div class="section-heading profile-section-heading"><div><p class="eyebrow">03 / Background</p><h2 id="education-title">Education</h2></div><span class="section-note">{{ education|length }} saved</span></div>
+            <div class="entry-layout">
+                <form class="profile-form add-form" method="post" action="{{ url_for('profile.create_profile_item', kind='education') }}"><h3>Add education</h3><div class="form-grid"><div class="field"><label>Institution <span>*</span></label><input name="institution" required maxlength="200"></div><div class="field"><label>Degree</label><input name="degree" maxlength="150"></div><div class="field"><label>Field of study</label><input name="field_of_study" maxlength="150"></div><div class="field"><label>Start date</label><input name="start_date" type="date"></div><div class="field"><label>End date</label><input name="end_date" type="date"></div><div class="field field-check"><label><input name="is_current" type="checkbox"> Currently studying</label></div><div class="field field-wide"><label>Description</label><textarea name="description" maxlength="2000" rows="3"></textarea></div></div><button class="secondary-button" type="submit">Add education</button></form>
+                <div class="entry-list">{% for item in education %}<details class="profile-entry"><summary><span>{{ item.degree or 'Education' }}</span><small>{{ item.institution }}</small></summary><form class="profile-form entry-form" method="post" action="{{ url_for('profile.edit_profile_item', kind='education', item_id=item.id) }}"><div class="form-grid"><div class="field"><label>Institution</label><input name="institution" required maxlength="200" value="{{ item.institution }}"></div><div class="field"><label>Degree</label><input name="degree" maxlength="150" value="{{ item.degree or '' }}"></div><div class="field"><label>Field of study</label><input name="field_of_study" maxlength="150" value="{{ item.field_of_study or '' }}"></div><div class="field"><label>Start date</label><input name="start_date" type="date" value="{{ item.start_date or '' }}"></div><div class="field"><label>End date</label><input name="end_date" type="date" value="{{ item.end_date or '' }}"></div><div class="field field-check"><label><input name="is_current" type="checkbox" {% if item.is_current %}checked{% endif %}> Currently studying</label></div><div class="field field-wide"><label>Description</label><textarea name="description" maxlength="2000" rows="3">{{ item.description or '' }}</textarea></div></div><div class="entry-actions"><button class="secondary-button" type="submit">Save changes</button></form><form method="post" action="{{ url_for('profile.remove_profile_item', kind='education', item_id=item.id) }}" data-delete-form><button class="danger-button" type="submit">Delete</button></form></div></details>{% else %}<p class="empty-state">No education added yet.</p>{% endfor %}</div>
+            </div>
+        </section>
+
+        <section class="profile-section" aria-labelledby="experience-title">
+            <div class="section-heading profile-section-heading"><div><p class="eyebrow">04 / Experience</p><h2 id="experience-title">Work experience</h2></div><span class="section-note">{{ experience|length }} saved</span></div>
+            <div class="entry-layout">
+                <form class="profile-form add-form" method="post" action="{{ url_for('profile.create_profile_item', kind='experience') }}"><h3>Add experience</h3><div class="form-grid"><div class="field"><label>Company <span>*</span></label><input name="company_name" required maxlength="200"></div><div class="field"><label>Job title <span>*</span></label><input name="job_title" required maxlength="180"></div><div class="field"><label>Location</label><input name="location" maxlength="150"></div><div class="field"><label>Start date</label><input name="start_date" type="date"></div><div class="field"><label>End date</label><input name="end_date" type="date"></div><div class="field field-check"><label><input name="is_current" type="checkbox"> Current role</label></div><div class="field field-wide"><label>Description</label><textarea name="description" maxlength="2000" rows="3"></textarea></div></div><button class="secondary-button" type="submit">Add experience</button></form>
+                <div class="entry-list">{% for item in experience %}<details class="profile-entry"><summary><span>{{ item.job_title }}</span><small>{{ item.company_name }}</small></summary><form class="profile-form entry-form" method="post" action="{{ url_for('profile.edit_profile_item', kind='experience', item_id=item.id) }}"><div class="form-grid"><div class="field"><label>Company</label><input name="company_name" required maxlength="200" value="{{ item.company_name }}"></div><div class="field"><label>Job title</label><input name="job_title" required maxlength="180" value="{{ item.job_title }}"></div><div class="field"><label>Location</label><input name="location" maxlength="150" value="{{ item.location or '' }}"></div><div class="field"><label>Start date</label><input name="start_date" type="date" value="{{ item.start_date or '' }}"></div><div class="field"><label>End date</label><input name="end_date" type="date" value="{{ item.end_date or '' }}"></div><div class="field field-check"><label><input name="is_current" type="checkbox" {% if item.is_current %}checked{% endif %}> Current role</label></div><div class="field field-wide"><label>Description</label><textarea name="description" maxlength="2000" rows="3">{{ item.description or '' }}</textarea></div></div><div class="entry-actions"><button class="secondary-button" type="submit">Save changes</button></form><form method="post" action="{{ url_for('profile.remove_profile_item', kind='experience', item_id=item.id) }}" data-delete-form><button class="danger-button" type="submit">Delete</button></form></div></details>{% else %}<p class="empty-state">No work experience added yet.</p>{% endfor %}</div>
+            </div>
+        </section>
+
+        <section class="profile-section" aria-labelledby="projects-title">
+            <div class="section-heading profile-section-heading"><div><p class="eyebrow">05 / Selected work</p><h2 id="projects-title">Projects</h2></div><span class="section-note">{{ projects|length }} saved</span></div>
+            <div class="entry-layout">
+                <form class="profile-form add-form" method="post" action="{{ url_for('profile.create_profile_item', kind='projects') }}"><h3>Add project</h3><div class="form-grid"><div class="field"><label>Project name <span>*</span></label><input name="name" required maxlength="200"></div><div class="field field-wide"><label>Short summary</label><input name="summary" maxlength="500"></div><div class="field"><label>Project URL</label><input name="project_url" type="url" maxlength="500"></div><div class="field"><label>Repository URL</label><input name="repository_url" type="url" maxlength="500"></div><div class="field"><label>Start date</label><input name="start_date" type="date"></div><div class="field"><label>End date</label><input name="end_date" type="date"></div><div class="field field-check"><label><input name="is_current" type="checkbox"> In progress</label></div><div class="field field-wide"><label>Description</label><textarea name="description" maxlength="3000" rows="3"></textarea></div></div><button class="secondary-button" type="submit">Add project</button></form>
+                <div class="entry-list">{% for item in projects %}<details class="profile-entry"><summary><span>{{ item.name }}</span><small>{{ item.summary or 'Project' }}</small></summary><form class="profile-form entry-form" method="post" action="{{ url_for('profile.edit_profile_item', kind='projects', item_id=item.id) }}"><div class="form-grid"><div class="field"><label>Project name</label><input name="name" required maxlength="200" value="{{ item.name }}"></div><div class="field field-wide"><label>Short summary</label><input name="summary" maxlength="500" value="{{ item.summary or '' }}"></div><div class="field"><label>Project URL</label><input name="project_url" type="url" maxlength="500" value="{{ item.project_url or '' }}"></div><div class="field"><label>Repository URL</label><input name="repository_url" type="url" maxlength="500" value="{{ item.repository_url or '' }}"></div><div class="field"><label>Start date</label><input name="start_date" type="date" value="{{ item.start_date or '' }}"></div><div class="field"><label>End date</label><input name="end_date" type="date" value="{{ item.end_date or '' }}"></div><div class="field field-check"><label><input name="is_current" type="checkbox" {% if item.is_current %}checked{% endif %}> In progress</label></div><div class="field field-wide"><label>Description</label><textarea name="description" maxlength="3000" rows="3">{{ item.description or '' }}</textarea></div></div><div class="entry-actions"><button class="secondary-button" type="submit">Save changes</button></form><form method="post" action="{{ url_for('profile.remove_profile_item', kind='projects', item_id=item.id) }}" data-delete-form><button class="danger-button" type="submit">Delete</button></form></div></details>{% else %}<p class="empty-state">No projects added yet.</p>{% endfor %}</div>
+            </div>
+        </section>
+
+        <section class="profile-section" aria-labelledby="certifications-title">
+            <div class="section-heading profile-section-heading"><div><p class="eyebrow">06 / Credentials</p><h2 id="certifications-title">Certifications</h2></div><span class="section-note">{{ certifications|length }} saved</span></div>
+            <div class="entry-layout">
+                <form class="profile-form add-form" method="post" action="{{ url_for('profile.create_profile_item', kind='certifications') }}"><h3>Add certification</h3><div class="form-grid"><div class="field"><label>Certification name <span>*</span></label><input name="name" required maxlength="200"></div><div class="field"><label>Issuing organization</label><input name="issuing_organization" maxlength="200"></div><div class="field"><label>Issue date</label><input name="issue_date" type="date"></div><div class="field"><label>Expiration date</label><input name="expiration_date" type="date"></div><div class="field"><label>Credential ID</label><input name="credential_id" maxlength="200"></div><div class="field"><label>Credential URL</label><input name="credential_url" type="url" maxlength="500"></div></div><button class="secondary-button" type="submit">Add certification</button></form>
+                <div class="entry-list">{% for item in certifications %}<details class="profile-entry"><summary><span>{{ item.name }}</span><small>{{ item.issuing_organization or 'Certification' }}</small></summary><form class="profile-form entry-form" method="post" action="{{ url_for('profile.edit_profile_item', kind='certifications', item_id=item.id) }}"><div class="form-grid"><div class="field"><label>Certification name</label><input name="name" required maxlength="200" value="{{ item.name }}"></div><div class="field"><label>Issuing organization</label><input name="issuing_organization" maxlength="200" value="{{ item.issuing_organization or '' }}"></div><div class="field"><label>Issue date</label><input name="issue_date" type="date" value="{{ item.issue_date or '' }}"></div><div class="field"><label>Expiration date</label><input name="expiration_date" type="date" value="{{ item.expiration_date or '' }}"></div><div class="field"><label>Credential ID</label><input name="credential_id" maxlength="200" value="{{ item.credential_id or '' }}"></div><div class="field"><label>Credential URL</label><input name="credential_url" type="url" maxlength="500" value="{{ item.credential_url or '' }}"></div></div><div class="entry-actions"><button class="secondary-button" type="submit">Save changes</button></form><form method="post" action="{{ url_for('profile.remove_profile_item', kind='certifications', item_id=item.id) }}" data-delete-form><button class="danger-button" type="submit">Delete</button></form></div></details>{% else %}<p class="empty-state">No certifications added yet.</p>{% endfor %}</div>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.querySelectorAll('form[method="post"]').forEach((form) => {
+            if (!form.querySelector('input[name="csrf_token"]')) {
+                const token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = 'csrf_token';
+                token.value = '{{ csrf_token }}';
+                form.prepend(token);
+            }
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+</body>
+</html>

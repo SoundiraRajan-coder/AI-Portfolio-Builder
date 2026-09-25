@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Your Portfolio Forge workspace dashboard">
+    <title>Dashboard | Portfolio Forge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('forge_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <main class="page-shell dashboard-shell">
+        <nav class="topbar" aria-label="Dashboard navigation">
+            <a class="brand" href="{{ url_for('main.home') }}">
+                <span class="brand-mark" aria-hidden="true">P</span>
+                <span>Portfolio Forge</span>
+            </a>
+            <div class="topbar-actions">
+                <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle theme" title="Switch theme">
+                    <i class="fa-solid fa-moon theme-icon-dark"></i>
+                    <i class="fa-solid fa-sun theme-icon-light"></i>
+                </button>
+                <a class="nav-link" href="{{ url_for('profile.profile_page') }}">
+                    <i class="fa-solid fa-user-pen"></i> Edit Profile
+                </a>
+                <a class="logout-link" href="{{ url_for('auth.logout') }}">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                </a>
+            </div>
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack" role="alert">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}" data-flash-toast>
+                            <div class="flash-icon">
+                                {% if category == 'success' %}
+                                    <i class="fa-solid fa-circle-check"></i>
+                                {% elif category == 'error' %}
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info"></i>
+                                {% endif %}
+                            </div>
+                            <span class="flash-text">{{ message }}</span>
+                            <button type="button" class="flash-close-btn" aria-label="Close notification" onclick="var p=this.closest('.flash-message'); if(p){ p.classList.add('flash-dismissed'); setTimeout(function(){p.remove();},350); }">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <header class="dashboard-header-block">
+            <div class="dashboard-headline-wrap">
+                <span class="eyebrow"><i class="fa-solid fa-layer-group"></i> Developer Workspace</span>
+                <h1>Welcome back, <span class="gradient-text">{{ user.display_name or user.email }}</span></h1>
+                <p>Manage your portfolios, launch AI generation, and refine designs with live Copilot.</p>
+            </div>
+            
+            <div class="glass-card dashboard-user-card">
+                {% if user.avatar_url %}
+                    <img class="dashboard-avatar" src="{{ user.avatar_url }}" alt="">
+                {% else %}
+                    <span class="dashboard-avatar dashboard-avatar-initial">{{ (user.display_name or user.email)[0]|upper }}</span>
+                {% endif %}
+                <div class="user-info-text">
+                    <strong>{{ user.display_name or "Developer" }}</strong>
+                    <span>{{ user.email }}</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="dashboard-kpi-grid" aria-label="Overview Metrics">
+            <article class="glass-card kpi-card">
+                <div>
+                    <span class="kpi-label">Total Portfolios</span>
+                    <span class="kpi-value">{{ total_portfolios }}</span>
+                </div>
+                <div class="kpi-icon-box"><i class="fa-solid fa-folder-tree"></i></div>
+            </article>
+
+            <article class="glass-card kpi-card">
+                <div>
+                    <span class="kpi-label">AI Engine</span>
+                    <span class="kpi-value" style="font-size: 1.15rem; color: #38bdf8;">Gemini 3.6 Flash</span>
+                </div>
+                <div class="kpi-icon-box" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.25); color: #818cf8;"><i class="fa-solid fa-microchip"></i></div>
+            </article>
+
+            <article class="glass-card kpi-card">
+                <div>
+                    <span class="kpi-label">Connection Pool</span>
+                    <span class="kpi-value" style="font-size: 1.15rem; color: #34d399;">Active (Accelerated)</span>
+                </div>
+                <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25); color: #34d399;"><i class="fa-solid fa-bolt"></i></div>
+            </article>
+        </section>
+
+        <section class="portfolios-section-container" id="portfolios" aria-labelledby="portfolios-heading">
+            <div class="portfolios-toolbar-row">
+                <div class="toolbar-title-group">
+                    <h2 id="portfolios-heading">Your Portfolios</h2>
+                </div>
+                <a class="btn-primary" href="{{ url_for('portfolios.new_portfolio') }}">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Create New Portfolio</span>
+                </a>
+            </div>
+
+            {% if portfolios %}
+                <div class="portfolio-cards-grid">
+                    {% for portfolio in portfolios %}
+                        <article class="glass-card portfolio-card-item">
+                            <div class="portfolio-card-preview-header">
+                                <i class="fa-solid fa-laptop-code"></i>
+                            </div>
+                            <div class="portfolio-card-body">
+                                <div class="card-title-row">
+                                    <h3>{{ portfolio.name }}</h3>
+                                    <span class="status-pill-badge {{ portfolio.status }}">{{ portfolio.status }}</span>
+                                </div>
+                                
+                                <div class="portfolio-meta-dates">
+                                    <span>Created <strong>{{ portfolio.created_at.strftime('%b %d, %Y') if portfolio.created_at and portfolio.created_at.strftime is defined else (portfolio.created_at or 'Recently') }}</strong></span>
+                                    <span>Updated <strong>{{ portfolio.updated_at.strftime('%b %d, %Y') if portfolio.updated_at and portfolio.updated_at.strftime is defined else (portfolio.updated_at or 'Recently') }}</strong></span>
+                                </div>
+
+                                <div class="card-button-row">
+                                    <a class="card-action-btn primary-action" href="{{ url_for('portfolios.builder', portfolio_id=portfolio.id) }}">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </a>
+                                    <a class="card-action-btn" href="{{ url_for('portfolios.preview_portfolio', portfolio_id=portfolio.id) }}">
+                                        <i class="fa-solid fa-eye"></i> Preview
+                                    </a>
+                                    <a class="card-action-btn" href="{{ url_for('portfolios.download_portfolio', portfolio_id=portfolio.id) }}" title="Download Standalone ZIP">
+                                        <i class="fa-solid fa-download"></i> ZIP
+                                    </a>
+                                    <form method="post" action="{{ url_for('portfolios.remove', portfolio_id=portfolio.id) }}" data-portfolio-delete style="margin-left: auto;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <button class="card-action-btn delete-action" type="submit" title="Delete Portfolio">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="glass-card empty-portfolio-card">
+                    <div class="empty-icon-circle">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <h3>Start Your First Portfolio</h3>
+                    <p>Provide your information in our 3-step wizard and let Gemini AI assemble a bespoke developer portfolio.</p>
+                    <a class="btn-primary" href="{{ url_for('portfolios.new_portfolio') }}">
+                        <i class="fa-solid fa-plus"></i> Create New Portfolio
+                    </a>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        document.querySelectorAll('form[method="post"]').forEach((form) => {
+            if (!form.querySelector('input[name="csrf_token"]')) {
+                const token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = 'csrf_token';
+                token.value = '{{ csrf_token }}';
+                form.prepend(token);
+            }
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

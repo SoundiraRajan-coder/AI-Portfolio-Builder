@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ portfolio.name or 'Portfolio' }} - Live Preview & AI Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --panel-bg: #111827;
+      --panel-border: rgba(255, 255, 255, 0.1);
+      --accent-indigo: #6366f1;
+      --accent-cyan: #38bdf8;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: var(--bg-dark);
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: #f8fafc;
+    }
+
+    /* Top Preview Toolbar */
+    .preview-toolbar {
+      flex-shrink: 0;
+      height: 56px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      z-index: 50;
+    }
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .preview-title {
+      font-size: 0.94rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .preview-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.28);
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      border: 0;
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.07);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid #3b82f6;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+      box-shadow: 0 0 16px rgba(37, 99, 235, 0.45);
+    }
+    .btn-ai-toggle {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
+    }
+    .btn-ai-toggle:hover {
+      background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.45);
+    }
+    .btn-ai-toggle.active {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Main Workspace Layout */
+    .workspace-container {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 56px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Preview Iframe Pane */
+    .preview-pane {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      background: #000000;
+      transition: all 0.25s ease;
+    }
+    .portfolio-frame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #030712;
+    }
+
+    /* VS Code Copilot Secondary Sidebar */
+    .ai-sidebar {
+      width: 440px;
+      max-width: 100%;
+      height: 100%;
+      background: #18181b;
+      border-left: 1px solid #27272a;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -8px 0 25px rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ai-sidebar.collapsed {
+      margin-right: -440px;
+      transform: translateX(100%);
+      pointer-events: none;
+    }
+
+    /* Sidebar Header */
+    .sidebar-header {
+      height: 50px;
+      padding: 0 16px;
+      background: #27272a;
+      border-bottom: 1px solid #3f3f46;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #f4f4f5;
+    }
+    .gemini-pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #3f3f46;
+      color: #38bdf8;
+      border: 1px solid #52525b;
+    }
+    .sidebar-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .icon-btn {
+      background: transparent;
+      border: 0;
+      color: #a1a1aa;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      transition: all 0.15s ease;
+    }
+    .icon-btn:hover {
+      background: #3f3f46;
+      color: #f4f4f5;
+    }
+
+    /* Live Chat Messages Thread */
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #18181b;
+    }
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 3px;
+    }
+
+    /* Message Cards */
+    .message-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: fadeIn 0.2s ease;
+    }
+    .message-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: #71717a;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 0 4px;
+    }
+    .sender-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      color: #a1a1aa;
+    }
+    .message-group.user .sender-tag {
+      color: #38bdf8;
+    }
+    .message-group.assistant .sender-tag {
+      color: #818cf8;
+    }
+    .message-card {
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      line-height: 1.55;
+      position: relative;
+    }
+    .message-group.user .message-card {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      color: #f4f4f5;
+    }
+    .message-group.assistant .message-card {
+      background: #1f2023;
+      border: 1px solid #2e3035;
+      border-left: 3px solid #6366f1;
+      color: #e4e4e7;
+    }
+    .message-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 8px;
+      padding: 2px 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: #34d399;
+    }
+
+    /* Quick Suggestion Chips */
+    .suggestions-tray {
+      padding: 10px 14px;
+      background: #1e1e22;
+      border-top: 1px solid #27272a;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .suggestions-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #71717a;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .chips-carousel {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .chips-carousel::-webkit-scrollbar {
+      height: 4px;
+    }
+    .chips-carousel::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 2px;
+    }
+    .chip-btn {
+      background: #27272a;
+      color: #a1a1aa;
+      border: 1px solid #3f3f46;
+      font-size: 0.73rem;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .chip-btn:hover {
+      background: #3f3f46;
+      color: #38bdf8;
+      border-color: #38bdf8;
+    }
+
+    /* Input Footer Area */
+    .chat-footer {
+      padding: 12px 14px;
+      background: #18181b;
+      border-top: 1px solid #27272a;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .input-box-wrapper {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      background: #09090b;
+      border: 1px solid #3f3f46;
+      border-radius: 8px;
+      padding: 6px 8px 6px 12px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .input-box-wrapper:focus-within {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 1px #38bdf8;
+    }
+    .chat-textarea {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      color: #f4f4f5;
+      font-size: 0.84rem;
+      font-family: inherit;
+      resize: none;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 4px 0;
+      line-height: 1.4;
+      outline: none;
+    }
+    .send-btn {
+      background: #2563eb;
+      color: #ffffff;
+      border: 0;
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      margin-bottom: 2px;
+      flex-shrink: 0;
+    }
+    .send-btn:hover {
+      background: #1d4ed8;
+    }
+    .send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .input-hint-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      color: #71717a;
+      padding: 0 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .typing-status {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      color: #38bdf8;
+      font-size: 0.74rem;
+      font-weight: 500;
+    }
+    .typing-status.active {
+      display: flex;
+    }
+    .spinner-sm {
+      width: 10px;
+      height: 10px;
+      border: 2px solid rgba(56, 189, 248, 0.3);
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .ai-sidebar {
+        position: fixed;
+        right: 0;
+        top: 56px;
+        width: 100%;
+        height: calc(100vh - 56px);
+      }
+      .preview-title {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation Controls -->
+  <nav class="preview-toolbar" aria-label="Portfolio preview controls">
+    <div class="toolbar-left">
+      <a class="btn-action btn-secondary" href="{{ url_for('portfolios.builder', portfolio_id=portfolio.id) }}">
+        <i class="fa-solid fa-arrow-left"></i> Back to Editor
+      </a>
+      <span class="preview-title">{{ portfolio.name or 'Portfolio' }} <span class="preview-badge">Live Preview</span></span>
+    </div>
+    <div class="toolbar-right">
+      <button id="toggle-sidebar-btn" class="btn-action btn-ai-toggle" type="button" title="Toggle AI Copilot Sidebar">
+        <i class="fa-solid fa-code"></i> Copilot Assistant
+      </button>
+      <a class="btn-action btn-secondary" href="{{ url_for('portfolios.preview_content', portfolio_id=portfolio.id) }}" target="_blank" rel="noopener" title="Open pure standalone portfolio in a new tab">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Tab
+      </a>
+      <a class="btn-action btn-primary" href="{{ url_for('portfolios.download_portfolio', portfolio_id=portfolio.id) }}" title="Download complete standalone HTML, CSS, and assets package as a ZIP">
+        <i class="fa-solid fa-download"></i> Download ZIP
+      </a>
+    </div>
+  </nav>
+
+  <!-- Workspace Container: Split Screen Preview + VS Code Style Sidebar -->
+  <div class="workspace-container">
+    <main class="preview-pane">
+      <iframe id="preview-frame" class="portfolio-frame" title="Generated portfolio preview" src="{{ url_for('portfolios.preview_content', portfolio_id=portfolio.id) }}"></iframe>
+    </main>
+
+    <!-- AI Secondary Sidebar (Collapsed by default) -->
+    <aside id="ai-sidebar" class="ai-sidebar collapsed" aria-label="AI Live Portfolio Assistant">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <i class="fa-solid fa-terminal" style="color: #38bdf8;"></i>
+          <span>Copilot Assistant</span>
+          <span class="gemini-pill">Gemini 3.6</span>
+        </div>
+        <div class="sidebar-actions">
+          <button id="clear-chat-btn" class="icon-btn" type="button" title="Clear chat history">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+          <button id="close-sidebar-btn" class="icon-btn" type="button" title="Hide assistant">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Chat Messages Thread -->
+      <div id="chat-messages" class="chat-messages">
+        <!-- Messages rendered dynamically -->
+      </div>
+
+      <!-- Quick Suggestion Ideas Tray -->
+      <div class="suggestions-tray">
+        <span class="suggestions-title">Quick Actions</span>
+        <div class="chips-carousel">
+          <button type="button" class="chip-btn" data-prompt="Change theme to deep emerald green with glowing accents">Emerald Palette</button>
+          <button type="button" class="chip-btn" data-prompt="Make project cards modern bento grid with subtle glowing borders">Bento Grid Projects</button>
+          <button type="button" class="chip-btn" data-prompt="Refine hero typography balance and ensure full name is cleanly formatted">Hero Typography</button>
+          <button type="button" class="chip-btn" data-prompt="Enhance skill tags with glowing category cards and tech logos">Skill Badges</button>
+          <button type="button" class="chip-btn" data-prompt="Add clean timeline borders and badges to work experience">Timeline Styling</button>
+        </div>
+      </div>
+
+      <!-- Chat Input Footer -->
+      <div class="chat-footer">
+        <div class="input-box-wrapper">
+          <textarea id="chat-input" class="chat-textarea" rows="2" placeholder="Ask Copilot to modify styling, layouts, sections, or content..."></textarea>
+          <button id="send-chat-btn" class="send-btn" type="button" title="Send message (Enter)">
+            <i class="fa-solid fa-paper-plane" style="font-size: 0.75rem;"></i>
+          </button>
+        </div>
+        <div class="input-hint-row">
+          <span id="typing-status" class="typing-status"><span class="spinner-sm"></span> Applying modifications with Gemini...</span>
+          <span class="hint-text">Press <kbd style="background: #27272a; border: 1px solid #3f3f46; padding: 1px 4px; border-radius: 3px; color: #d4d4d8;">Enter</kbd> to send</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      const portfolioId = "{{ portfolio.id }}";
+      const storageKey = `portfolio_chat_history_${portfolioId}`;
+      const toggleBtn = document.getElementById('toggle-sidebar-btn');
+      const closeBtn = document.getElementById('close-sidebar-btn');
+      const clearBtn = document.getElementById('clear-chat-btn');
+      const sidebar = document.getElementById('ai-sidebar');
+      const chatMessages = document.getElementById('chat-messages');
+      const chatInput = document.getElementById('chat-input');
+      const sendBtn = document.getElementById('send-chat-btn');
+      const typingStatus = document.getElementById('typing-status');
+      const previewFrame = document.getElementById('preview-frame');
+
+      // Default welcome message
+      const defaultHistory = [
+        {
+          role: 'assistant',
+          text: "I am your Portfolio Copilot. You can describe any styling, layout, theme, or content updates in natural language (e.g. 'Switch to emerald green accent', 'Make the hero typography bolder', 'Add glowing borders to project cards'). I will update the code and refresh your live preview.",
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ];
+
+      function loadHistory() {
+        try {
+          const saved = sessionStorage.getItem(storageKey);
+          if (saved) return JSON.parse(saved);
+        } catch (e) {}
+        return defaultHistory;
+      }
+
+      function saveHistory(history) {
+        try {
+          sessionStorage.setItem(storageKey, JSON.stringify(history));
+        } catch (e) {}
+      }
+
+      let history = loadHistory();
+
+      function renderChat() {
+        chatMessages.innerHTML = '';
+        history.forEach(msg => {
+          const group = document.createElement('div');
+          group.className = `message-group ${msg.role}`;
+
+          const header = document.createElement('div');
+          header.className = 'message-header';
+          
+          const senderTag = document.createElement('span');
+          senderTag.className = 'sender-tag';
+          if (msg.role === 'user') {
+            senderTag.innerHTML = '<i class="fa-solid fa-user" style="font-size: 0.65rem;"></i> You';
+          } else {
+            senderTag.innerHTML = '<i class="fa-solid fa-terminal" style="font-size: 0.65rem;"></i> Copilot';
+          }
+
+          const timeEl = document.createElement('span');
+          timeEl.textContent = msg.time || '';
+
+          header.appendChild(senderTag);
+          header.appendChild(timeEl);
+
+          const card = document.createElement('div');
+          card.className = 'message-card';
+          card.textContent = msg.text;
+
+          if (msg.role === 'assistant' && msg.status) {
+            const badge = document.createElement('div');
+            badge.className = 'message-badge';
+            badge.innerHTML = '<i class="fa-solid fa-check" style="font-size: 0.6rem;"></i> ' + msg.status;
+            card.appendChild(badge);
+          }
+
+          group.appendChild(header);
+          group.appendChild(card);
+          chatMessages.appendChild(group);
+        });
+
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      renderChat();
+
+      // Toggle Sidebar
+      function toggleSidebar() {
+        sidebar.classList.toggle('collapsed');
+        toggleBtn.classList.toggle('active', !sidebar.classList.contains('collapsed'));
+        if (!sidebar.classList.contains('collapsed')) {
+          chatInput.focus();
+        }
+      }
+
+      toggleBtn?.addEventListener('click', toggleSidebar);
+      closeBtn?.addEventListener('click', () => {
+        sidebar.classList.add('collapsed');
+        toggleBtn.classList.remove('active');
+      });
+
+      // Clear History
+      clearBtn?.addEventListener('click', () => {
+        if (confirm('Clear assistant conversation history?')) {
+          history = defaultHistory;
+          saveHistory(history);
+          renderChat();
+        }
+      });
+
+      // Quick Chips
+      document.querySelectorAll('.chip-btn').forEach(chip => {
+        chip.addEventListener('click', () => {
+          chatInput.value = chip.dataset.prompt;
+          chatInput.focus();
+        });
+      });
+
+      // Send Message Function
+      async function handleSendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Add user message
+        history.push({ role: 'user', text, time });
+        saveHistory(history);
+        renderChat();
+
+        chatInput.value = '';
+        chatInput.disabled = true;
+        sendBtn.disabled = true;
+
+        let step = 0;
+        const steps = [
+          'Analyzing architectural changes with Gemini...',
+          'Applying layout, styling & typography adjustments...',
+          'Validating responsive markup...',
+          'Finalizing portfolio code & refreshing preview...'
+        ];
+        typingStatus.innerHTML = `<span class="spinner-sm"></span> ${steps[0]}`;
+        typingStatus.classList.add('active');
+        const progressTimer = setInterval(() => {
+          step = (step + 1) % steps.length;
+          typingStatus.innerHTML = `<span class="spinner-sm"></span> ${steps[step]}`;
+        }, 3000);
+
+        const abortController = new AbortController();
+        const timeoutId = setTimeout(() => abortController.abort(), 90000);
+
+        try {
+          const res = await fetch("{{ url_for('portfolios.ai_edit_portfolio', portfolio_id=portfolio.id) }}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ instruction: text }),
+            signal: abortController.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          let data = {};
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            data = await res.json();
+          } else {
+            const raw = await res.text();
+            throw new Error('Server returned an unexpected response format.');
+          }
+
+          if (!res.ok || data.status !== 'success') {
+            throw new Error(data.message || 'Failed to modify portfolio with AI.');
+          }
+
+          // Reload iframe preview seamlessly with cache buster
+          const contentUrl = "{{ url_for('portfolios.preview_content', portfolio_id=portfolio.id) }}";
+          previewFrame.src = contentUrl + '?t=' + Date.now();
+
+          // Add assistant confirmation message
+          const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          history.push({
+            role: 'assistant',
+            text: data.message || 'I updated the portfolio based on your request. The live preview has been refreshed.',
+            time: aiTime,
+            status: 'Applied & Refreshed'
+          });
+          saveHistory(history);
+          renderChat();
+
+        } catch (err) {
+          clearTimeout(timeoutId);
+          const errTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          let friendlyError = err.message || 'Unable to update portfolio. Please try again.';
+          if (err.name === 'AbortError') {
+            friendlyError = 'Request timed out while generating code. Please try sending your edit request again.';
+          } else if (friendlyError.includes('503') || friendlyError.includes('high demand') || friendlyError.includes('UNAVAILABLE')) {
+            friendlyError = 'Gemini AI is temporarily experiencing high demand. Please try sending your request again in a few moments.';
+          } else if (friendlyError.includes('429') || friendlyError.includes('quota') || friendlyError.includes('RESOURCE_EXHAUSTED')) {
+            friendlyError = 'AI rate limit reached. Please wait a moment and try again.';
+          }
+          history.push({
+            role: 'assistant',
+            text: `⚠️ ${friendlyError}`,
+            time: errTime
+          });
+          saveHistory(history);
+          renderChat();
+        } finally {
+          clearInterval(progressTimer);
+          chatInput.disabled = false;
+          sendBtn.disabled = false;
+          typingStatus.classList.remove('active');
+          chatInput.focus();
+        }
+      }
+
+      sendBtn?.addEventListener('click', handleSendMessage);
+
+      chatInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSendMessage();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+/* Portfolio Forge Core Styles */
+:root {
+    --pf-body-bg: #0f172a;
+    --pf-text: #f8fafc;
+    --pf-muted: #94a3b8;
+    --pf-accent: #3b82f6;
+    --pf-accent-strong: #1d4ed8;
+    --pf-secondary: #8b5cf6;
+    --pf-surface: #1e293b;
+    --pf-card-bg: #1e293b;
+    --pf-border: rgba(255, 255, 255, 0.1);
+    --pf-radius: 16px;
+    --pf-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    --pf-font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --pf-font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --pf-section-gap: 56px;
+    --pf-section-padding: 56px;
+    --pf-page-padding: 32px 24px;
+    --pf-page-max-width: 1200px;
+    --pf-animation-duration: 0.2s;
+    --pf-badge-bg: rgba(59, 130, 246, 0.12);
+    --pf-badge-text: #93c5fd;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    line-height: 1.65;
+    background-color: var(--pf-body-bg);
+    color: var(--pf-text);
+    font-family: var(--pf-font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    color: var(--pf-accent);
+    text-decoration: none;
+    transition: color var(--pf-animation-duration) ease, transform var(--pf-animation-duration) ease, opacity var(--pf-animation-duration) ease;
+}
+
+a:hover {
+    color: var(--pf-accent-strong);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--pf-font-heading);
+    line-height: 1.2;
+    color: var(--pf-text);
+    margin-top: 0;
+}
+
+.portfolio-page {
+    max-width: var(--pf-page-max-width);
+    margin: auto;
+    padding: var(--pf-page-padding);
+}
+
+/* Navigation */
+.portfolio-navigation {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 16px max(24px, calc((100vw - var(--pf-page-max-width)) / 2));
+    background: color-mix(in srgb, var(--pf-body-bg) 88%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--pf-border);
+}
+
+.portfolio-navigation strong {
+    font-family: var(--pf-font-heading);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.portfolio-navigation div,
+.portfolio-meta,
+.project-links,
+.portfolio-footer div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+}
+
+.portfolio-navigation a {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--pf-muted);
+}
+
+.portfolio-navigation a:hover {
+    color: var(--pf-text);
+}
+
+/* Hero Section */
+.portfolio-hero {
+    min-height: clamp(300px, 46vh, 560px);
+    display: flex;
+    align-items: center;
+    gap: clamp(32px, 6vw, 88px);
+    padding: clamp(48px, 8vw, 112px) 0;
+}
+
+.portfolio-hero-copy {
+    min-width: 0;
+    max-width: min(780px, 100%);
+}
+
+.portfolio-label,
+.project-index,
+.section-kicker {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--pf-accent);
+    font-weight: 700;
+    font-size: 0.78rem;
+    margin-bottom: 8px;
+}
+
+.portfolio-hero h1 {
+    margin: 8px 0 16px;
+    font-size: clamp(2.4rem, 6.5vw, 5.8rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.06;
+}
+
+.portfolio-intro {
+    max-width: 60ch;
+    margin: 0 0 24px;
+    font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+    color: var(--pf-muted);
+    line-height: 1.6;
+}
+
+.portfolio-meta a {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: var(--pf-badge-bg);
+    color: var(--pf-badge-text);
+    font-weight: 600;
+    font-size: 0.88rem;
+    border: 1px solid var(--pf-border);
+    transition: transform var(--pf-animation-duration) ease, background var(--pf-animation-duration) ease, color var(--pf-animation-duration) ease;
+}
+
+.portfolio-meta a:hover {
+    transform: translateY(-2px);
+    color: var(--pf-accent);
+    border-color: var(--pf-accent);
+}
+
+.portfolio-meta a.portfolio-cta-btn {
+    background: var(--pf-accent);
+    color: #ffffff;
+    border-color: var(--pf-accent-strong);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--pf-accent) 30%, transparent);
+}
+
+.portfolio-meta a.portfolio-cta-btn:hover {
+    background: var(--pf-accent-strong);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--pf-accent) 45%, transparent);
+}
+
+.portfolio-location {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    font-size: 0.88rem;
+    color: var(--pf-muted);
+    font-weight: 500;
+    background: color-mix(in srgb, var(--pf-body-bg) 60%, var(--pf-surface));
+    border-radius: 999px;
+    border: 1px solid var(--pf-border);
+}
+
+.hero-photo {
+    width: min(34vw, 360px);
+    max-width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--pf-radius);
+    box-shadow: var(--pf-shadow);
+    border: 1px solid var(--pf-border);
+}
+
+/* Base Components & Lists */
+.portfolio-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pf-section-gap);
+}
+
+.portfolio-section h2,
+.portfolio-footer h2 {
+    margin: 0 0 24px;
+    font-size: clamp(1.75rem, 3.6vw, 3.2rem);
+    letter-spacing: -0.03em;
+}
+
+.project-grid {
+    display: grid;
+    gap: 24px;
+}
+
+.project-card,
+.experience-list article,
+.education-list article {
+    position: relative;
+    padding: 28px;
+    border-radius: var(--pf-radius);
+    background: var(--pf-card-bg);
+    border: 1px solid var(--pf-border);
+    box-shadow: var(--pf-shadow);
+    transition: transform var(--pf-animation-duration) cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow var(--pf-animation-duration) cubic-bezier(0.16, 1, 0.3, 1),
+                border-color var(--pf-animation-duration);
+}
+
+.project-card:hover,
+.experience-list article:hover,
+.education-list article:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--pf-accent) 40%, var(--pf-border));
+}
+
+.project-card h3 {
+    font-size: 1.45rem;
+    margin: 0 0 10px;
+}
+
+.project-card p {
+    color: var(--pf-muted);
+    margin: 0 0 16px;
+}
+
+.project-card small {
+    display: inline-block;
+    color: var(--pf-accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+
+.project-links a {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: var(--pf-badge-bg);
+    color: var(--pf-badge-text);
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: 1px solid var(--pf-border);
+}
+
+.project-links a:hover {
+    transform: translateY(-2px);
+    color: var(--pf-accent);
+}
+
+/* Skills */
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.skills-list span {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: var(--pf-radius);
+    background: var(--pf-badge-bg);
+    color: var(--pf-badge-text);
+    font-weight: 600;
+    font-size: 0.92rem;
+    border: 1px solid var(--pf-border);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* Experience & Education */
+.experience-list,
+.education-list,
+.simple-list {
+    display: grid;
+    gap: 18px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.experience-list article h3,
+.education-list article h3 {
+    margin: 0 0 4px;
+    font-size: 1.25rem;
+}
+
+.experience-list article p,
+.education-list article p {
+    color: var(--pf-muted);
+    margin: 6px 0 0;
+}
+
+.experience-list article small,
+.education-list article small {
+    display: inline-block;
+    color: var(--pf-accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.simple-list li {
+    padding: 20px 24px;
+    border-radius: var(--pf-radius);
+    background: var(--pf-card-bg);
+    border: 1px solid var(--pf-border);
+    box-shadow: var(--pf-shadow);
+}
+
+.simple-list li strong {
+    font-size: 1.15rem;
+    color: var(--pf-text);
+}
+
+.simple-list li p {
+    color: var(--pf-muted);
+    margin: 6px 0 0;
+}
+
+/* Background Variations */
+.background-gradient {
+    background: linear-gradient(145deg, var(--pf-body-bg) 0%, color-mix(in srgb, var(--pf-secondary) 14%, var(--pf-body-bg)) 100%);
+}
+
+.background-radial_glow {
+    background: radial-gradient(circle at 80% 12%, color-mix(in srgb, var(--pf-accent) 22%, transparent), transparent 45%),
+                radial-gradient(circle at 10% 70%, color-mix(in srgb, var(--pf-secondary) 16%, transparent), transparent 40%),
+                var(--pf-body-bg);
+}
+
+.background-mesh {
+    background: radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--pf-secondary) 20%, transparent), transparent 38%),
+                radial-gradient(circle at 15% 65%, color-mix(in srgb, var(--pf-accent) 18%, transparent), transparent 42%),
+                radial-gradient(circle at 50% 95%, color-mix(in srgb, var(--pf-accent-strong) 14%, transparent), transparent 50%),
+                var(--pf-body-bg);
+}
+
+.background-dark_grid {
+    background-color: var(--pf-body-bg);
+    background-image: linear-gradient(color-mix(in srgb, var(--pf-accent) 10%, transparent) 1px, transparent 1px),
+                      linear-gradient(90deg, color-mix(in srgb, var(--pf-accent) 10%, transparent) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+.background-dots {
+    background-color: var(--pf-body-bg);
+    background-image: radial-gradient(color-mix(in srgb, var(--pf-accent) 16%, transparent) 1.5px, transparent 1.5px);
+    background-size: 28px 28px;
+}

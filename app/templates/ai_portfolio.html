@@ -1,0 +1,25 @@
+{% set c = portfolio.content %}
+{% set p = c.profile %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ p.name }} | Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fira+Code:wght@300..700&family=Inter:wght@300..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lora:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Outfit:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portfolio.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/templates/portfolio_design_tokens.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ai_renderer_variants.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portfolio_composition.css') }}">
+</head>
+<body class="ai-portfolio {{ portfolio.design.classes|join(' ') }} composition-nav-{{ portfolio.composition.navigation }}{% if portfolio.design.spec.animations %} animations-enabled{% endif %}" style="{% for key, value in portfolio.design.css_vars.items() %}{{ key }}: {{ value }}; {% endfor %}">
+    {% include 'components/navigation.html' %}
+    <main class="portfolio-page composition-page">
+        {% for module in portfolio.modules %}
+            {% include module.template %}
+        {% endfor %}
+    </main>
+</body>
+</html>
