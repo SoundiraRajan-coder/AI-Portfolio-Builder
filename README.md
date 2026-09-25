@@ -61,6 +61,18 @@ SUPABASE_DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@YOUR_HOST:5432/postgre
 
 `SUPABASE_DATABASE_URL` is the PostgreSQL connection string from the Supabase dashboard. Use the Supabase pooler connection string when the dashboard recommends it for your environment. Keep the password in `.env`; never place this value in templates, JavaScript, or committed files. `DATABASE_URL` is also accepted as a fallback for deployment platforms, but `SUPABASE_DATABASE_URL` is the documented local variable.
 
+### Profile image storage
+
+Profile images are stored in Supabase Storage. Configure these server-only environment variables locally and in Vercel:
+
+```bash
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_STORAGE_BUCKET=portfolio-images
+```
+
+Create the configured bucket as a public bucket so portfolio visitors and standalone ZIP exports can retrieve uploaded profile images. Do not expose the service role key in browser code or commit it to Git.
+
 Install the PostgreSQL driver after updating the project:
 
 ```powershell

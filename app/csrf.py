@@ -25,7 +25,7 @@ def validate_csrf():
     json_token = (request.get_json(silent=True) or {}).get(CSRF_FIELD_NAME, "") if request.is_json else ""
     request_token = request.headers.get(CSRF_HEADER_NAME) or request.form.get(CSRF_FIELD_NAME, "") or json_token
     if not session_token or not request_token or not hmac.compare_digest(session_token, request_token):
-        if request.is_json:
-            return jsonify({"status": "error", "message": "Invalid CSRF token."}), 400
+        if request.is_json or request.path == "/portfolios/upload":
+            return jsonify({"success": False, "error": "Invalid CSRF token."}), 400
         abort(400, description="Invalid CSRF token.")
     return None

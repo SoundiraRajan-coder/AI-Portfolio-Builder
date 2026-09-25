@@ -30,6 +30,40 @@ let currentStep = "profile";
 let isGenerating = false;
 
 const safeText = (value) => String(value || "").trim();
+const readUploadResponse = async (response, fallbackMessage) => {
+    const contentType = response.headers.get("content-type") || "";
+    const responseText = await response.text();
+    let payload = null;
+
+    if (contentType.toLowerCase().includes("application/json") && responseText) {
+        try {
+            payload = JSON.parse(responseText);
+        } catch (error) {
+            console.error("Upload endpoint returned invalid JSON.", error);
+        }
+    }
+
+    if (response.ok && payload?.success) {
+        return payload;
+    }
+
+    const statusMessages = {
+        400: "The selected file is invalid.",
+        401: "Please sign in again before uploading a profile image.",
+        403: "You are not allowed to upload this file.",
+        413: "Profile image must be 5 MB or smaller.",
+        500: "Profile image upload failed. Please try again.",
+    };
+    const message = payload?.error || statusMessages[response.status] || fallbackMessage;
+    if (!payload) {
+        console.error("Upload endpoint returned a non-JSON response.", {
+            status: response.status,
+            contentType,
+            responseText: responseText.slice(0, 500),
+        });
+    }
+    throw new Error(message);
+};
 const safeVal = (selector, fallback = "") => {
     const el = document.querySelector(selector);
     return el ? safeText(el.value) : fallback;
@@ -930,10 +964,7 @@ const setupUploads = () => {
                 },
                 body: formData,
             });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error || "Photo upload failed");
-            }
+            const data = await readUploadResponse(response, "Profile image upload failed. Please try again.");
             if (photoHidden) photoHidden.value = data.url;
             if (photoPreview) {
                 photoPreview.src = data.url;
@@ -998,10 +1029,7 @@ const setupUploads = () => {
                 },
                 body: formData,
             });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error || "Resume upload failed");
-            }
+            const data = await readUploadResponse(response, "Resume upload failed. Please try again.");
             if (resumeHidden) resumeHidden.value = data.url;
             if (resumeTitle) resumeTitle.textContent = file.name || "Resume Uploaded";
             if (resumeBtnLabel) resumeBtnLabel.textContent = "Change CV";

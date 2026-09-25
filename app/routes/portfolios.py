@@ -2,7 +2,7 @@ import os
 import uuid
 from pathlib import Path
 from flask import Blueprint, current_app, flash, jsonify, make_response, redirect, render_template, request, send_file, session, url_for
-from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 
 from app.services import gemini_service
 from app.database import DatabaseError
@@ -25,43 +25,89 @@ from app.services.gemini_service import (
     edit_portfolio_html_with_ai,
 )
 from app.services.portfolio_builder import PortfolioNotFoundError, get_builder_data, save_builder_data
+from app.services.profile_image_storage import ProfileImageStorageError, upload_profile_image
 from app.services.renderer import RendererError, render_portfolio
 
 portfolios_bp = Blueprint("portfolios", __name__, url_prefix="/portfolios")
 
-ALLOWED_PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+PHOTO_MAX_BYTES = 5 * 1024 * 1024
+PHOTO_TYPES = {
+    ".jpg": ("image/jpeg",),
+    ".jpeg": ("image/jpeg",),
+    ".png": ("image/png",),
+    ".webp": ("image/webp",),
+}
 ALLOWED_RESUME_EXTENSIONS = {".pdf", ".doc", ".docx"}
+
+
+def _valid_image_content(content, extension):
+    if extension in {".jpg", ".jpeg"}:
+        return content.startswith(b"\xff\xd8\xff")
+    if extension == ".png":
+        return content.startswith(b"\x89PNG\r\n\x1a\n")
+    if extension == ".webp":
+        return len(content) >= 12 and content.startswith(b"RIFF") and content[8:12] == b"WEBP"
+    return False
 
 
 @portfolios_bp.route("/upload", methods=["POST"])
 @login_required
 def upload_file():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded."}), 400
+    try:
+        file = request.files.get("file")
+    except RequestEntityTooLarge:
+        return jsonify({"success": False, "error": "Profile image must be 5 MB or smaller."}), 413
 
-    file = request.files["file"]
     if not file or not file.filename:
-        return jsonify({"error": "No file selected."}), 400
+        return jsonify({"success": False, "error": "No file selected."}), 400
 
     upload_type = request.form.get("type", "photo")
     ext = Path(file.filename).suffix.lower()
 
     if upload_type == "photo":
-        if ext not in ALLOWED_PHOTO_EXTENSIONS:
-            return jsonify({"error": f"Invalid photo format. Allowed formats: {', '.join(sorted(ALLOWED_PHOTO_EXTENSIONS))}"}), 400
+        allowed_mimetypes = PHOTO_TYPES.get(ext)
+        if not allowed_mimetypes:
+            return jsonify({"success": False, "error": "Invalid image type. Use JPG, PNG, or WEBP."}), 400
+        if file.mimetype not in allowed_mimetypes:
+            return jsonify({"success": False, "error": "Invalid image type. Use JPG, PNG, or WEBP."}), 400
+        content = file.read(PHOTO_MAX_BYTES + 1)
+        if len(content) > PHOTO_MAX_BYTES:
+            return jsonify({"success": False, "error": "Profile image must be 5 MB or smaller."}), 413
+        if not _valid_image_content(content, ext):
+            return jsonify({"success": False, "error": "Invalid image file."}), 400
+
+        user_id = str(session["user_id"])
+        object_path = f"profiles/{user_id}/{uuid.uuid4().hex}{ext}"
+        try:
+            url = upload_profile_image(
+                supabase_url=current_app.config.get("SUPABASE_URL"),
+                service_role_key=current_app.config.get("SUPABASE_SERVICE_ROLE_KEY"),
+                bucket=current_app.config.get("SUPABASE_STORAGE_BUCKET"),
+                object_path=object_path,
+                content=content,
+                content_type=file.mimetype,
+            )
+        except ProfileImageStorageError:
+            current_app.logger.exception("Profile image upload failed")
+            return jsonify({"success": False, "error": "Profile image upload failed."}), 500
+
+        return jsonify({"success": True, "url": url, "type": upload_type}), 201
     elif upload_type == "resume":
         if ext not in ALLOWED_RESUME_EXTENSIONS:
-            return jsonify({"error": f"Invalid resume format. Allowed formats: {', '.join(sorted(ALLOWED_RESUME_EXTENSIONS))}"}), 400
+            return jsonify({"success": False, "error": f"Invalid resume format. Allowed formats: {', '.join(sorted(ALLOWED_RESUME_EXTENSIONS))}"}), 400
     else:
-        return jsonify({"error": "Invalid upload type."}), 400
+        return jsonify({"success": False, "error": "Invalid upload type."}), 400
 
     user_id = str(session["user_id"])
-    upload_dir = Path(current_app.root_path) / "static" / "uploads" / user_id
-    upload_dir.mkdir(parents=True, exist_ok=True)
-
-    unique_name = f"{upload_type}_{uuid.uuid4().hex[:12]}{ext}"
-    target_path = upload_dir / unique_name
-    file.save(str(target_path))
+    try:
+        upload_dir = Path(current_app.root_path) / "static" / "uploads" / user_id
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        unique_name = f"{upload_type}_{uuid.uuid4().hex[:12]}{ext}"
+        target_path = upload_dir / unique_name
+        file.save(str(target_path))
+    except OSError:
+        current_app.logger.exception("Resume upload failed")
+        return jsonify({"success": False, "error": "Resume upload failed."}), 500
 
     url = f"/static/uploads/{user_id}/{unique_name}"
     return jsonify({

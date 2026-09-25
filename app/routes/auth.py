@@ -24,8 +24,8 @@ def login_required(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
         if not session.get("user_id"):
-            if request.is_json:
-                return jsonify({"status": "error", "message": "Authentication required. Please sign in again."}), 401
+            if request.is_json or request.path == "/portfolios/upload":
+                return jsonify({"success": False, "error": "Authentication required. Please sign in again."}), 401
             flash("Please sign in to continue.", "info")
             return redirect(url_for("auth.login"))
         return view(*args, **kwargs)

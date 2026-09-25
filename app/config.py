@@ -12,6 +12,9 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "development-only-secret")
     DEBUG = os.getenv("FLASK_ENV", "development") == "development"
     DATABASE_URL = os.getenv("SUPABASE_DATABASE_URL") or os.getenv("DATABASE_URL")
+    SUPABASE_URL = os.getenv("SUPABASE_URL")
+    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
