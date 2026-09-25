@@ -8,8 +8,19 @@ class ProfileImageStorageError(RuntimeError):
 
 
 def upload_profile_image(*, supabase_url, service_role_key, bucket, object_path, content, content_type):
-    if not supabase_url or not service_role_key or not bucket:
-        raise ProfileImageStorageError("Supabase Storage is not configured.")
+    missing_settings = [
+        name
+        for name, value in {
+            "SUPABASE_URL": supabase_url,
+            "SUPABASE_SERVICE_ROLE_KEY": service_role_key,
+            "SUPABASE_STORAGE_BUCKET": bucket,
+        }.items()
+        if not value
+    ]
+    if missing_settings:
+        raise ProfileImageStorageError(
+            f"Supabase Storage configuration is missing: {', '.join(missing_settings)}."
+        )
 
     base_url = supabase_url.rstrip("/")
     encoded_bucket = quote(bucket, safe="")
@@ -32,7 +43,9 @@ def upload_profile_image(*, supabase_url, service_role_key, bucket, object_path,
             if response.status not in {200, 201}:
                 raise ProfileImageStorageError("Supabase Storage rejected the upload.")
     except HTTPError as exc:
-        raise ProfileImageStorageError("Supabase Storage rejected the upload.") from exc
+        raise ProfileImageStorageError(
+            f"Supabase Storage upload was rejected with HTTP {exc.code}."
+        ) from exc
     except (URLError, ValueError, OSError) as exc:
         raise ProfileImageStorageError("Supabase Storage could not be reached.") from exc
 
