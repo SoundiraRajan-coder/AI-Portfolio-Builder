@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Portfolio Forge - AI-Powered Developer & Designer Portfolio Generator">
+    <title>Portfolio Forge | AI-Powered Portfolio Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <main class="page-shell">
+        <nav class="topbar" aria-label="Main navigation">
+            <a class="brand" href="{{ url_for('main.home') }}">
+                <span class="brand-mark" aria-hidden="true">P</span>
+                <span>Portfolio Forge</span>
+            </a>
+            <div class="topbar-actions">
+                <a class="nav-link" href="{{ url_for('auth.login') }}">Sign In</a>
+                <a class="btn-primary" href="{{ url_for('auth.login') }}">
+                    <span>Get Started</span>
+                    <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem;"></i>
+                </a>
+            </div>
+        </nav>
+
+        <section class="landing-hero" aria-labelledby="hero-title">
+            <div class="hero-copy-block">
+                <span class="eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> AI-Powered Portfolio Architecture</span>
+                <h1 class="hero-headline" id="hero-title">
+                    Architect Your Developer Legacy with <span class="gradient-text">Generative AI</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Transform your engineering skills, GitHub repositories, and work history into a bespoke, high-performance web portfolio in seconds.
+                </p>
+                <div class="hero-ctas">
+                    <a class="btn-primary" href="{{ url_for('auth.login') }}">
+                        <span>Create Your Portfolio</span>
+                        <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <a class="btn-secondary" href="#features">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Explore Capabilities</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="glass-card hero-glass-preview" aria-label="Live System Highlights">
+                <div class="preview-status-row">
+                    <span>GENERATION PIPELINE</span>
+                    <span class="live-indicator"><span class="indicator-dot"></span> OPERATIONAL</span>
+                </div>
+                <div class="feature-signal-list">
+                    <div class="feature-signal-item">
+                        <div class="signal-icon-box"><i class="fa-solid fa-microchip"></i></div>
+                        <span>Gemini 3.6 Flash Engine</span>
+                        <strong>ACTIVE</strong>
+                    </div>
+                    <div class="feature-signal-item">
+                        <div class="signal-icon-box"><i class="fa-solid fa-code"></i></div>
+                        <span>Devicon SVG Technology Logos</span>
+                        <strong>VERIFIED</strong>
+                    </div>
+                    <div class="feature-signal-item">
+                        <div class="signal-icon-box"><i class="fa-solid fa-terminal"></i></div>
+                        <span>VS Code Copilot Live Editor</span>
+                        <strong>CONNECTED</strong>
+                    </div>
+                    <div class="feature-signal-item">
+                        <div class="signal-icon-box"><i class="fa-solid fa-box-archive"></i></div>
+                        <span>Standalone ZIP Code Export</span>
+                        <strong>READY</strong>
+                    </div>
+                </div>
+                <div class="preview-status-row" style="border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 0; padding-top: 16px; padding-bottom: 0;">
+                    <span>BUILD 2026.09</span>
+                    <span style="color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;">ZERO LATENCY POOL</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="bento-section" id="features" aria-labelledby="bento-title">
+            <div class="section-header-block">
+                <span class="eyebrow"><i class="fa-solid fa-shapes"></i> Engineering Features</span>
+                <h2 id="bento-title">Built for Modern Tech Professionals</h2>
+                <p>Everything you need to craft, customize, and deploy an industry-standard developer portfolio.</p>
+            </div>
+
+            <div class="bento-grid">
+                <article class="glass-card bento-card">
+                    <div>
+                        <div class="bento-card-icon"><i class="fa-solid fa-terminal"></i></div>
+                        <h3>Copilot Live Editing</h3>
+                        <p>Ask our built-in Copilot assistant to modify themes, layouts, color accents, and copy in natural language with instant live preview updates.</p>
+                    </div>
+                </article>
+
+                <article class="glass-card bento-card">
+                    <div>
+                        <div class="bento-card-icon" style="background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.25); color: #38bdf8;"><i class="fa-solid fa-code-branch"></i></div>
+                        <h3>Official Tech SVG Vectors</h3>
+                        <p>Enforced Devicon and FontAwesome vector brand graphics for Python, Java, React, TypeScript, Supabase, Docker, and 20+ technologies.</p>
+                    </div>
+                </article>
+
+                <article class="glass-card bento-card">
+                    <div>
+                        <div class="bento-card-icon" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25); color: #34d399;"><i class="fa-solid fa-file-zipper"></i></div>
+                        <h3>Standalone Code Export</h3>
+                        <p>Download your complete portfolio as clean, self-contained HTML and CSS ready to host on Vercel, Netlify, or GitHub Pages with zero vendor lock-in.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <footer class="landing-footer">
+            <span>Portfolio Forge &bull; AI Portfolio Architecture Platform</span>
+            <span>Powered by Gemini &amp; Tailwind CSS</span>
+        </footer>
+    </main>
+</body>
+</html>

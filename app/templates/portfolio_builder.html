@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Build your portfolio">
+    <title>Portfolio Builder | {{ builder_state.portfolio.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.4.2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/builder.css') }}?v=2.4.2">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('forge_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <main class="page-shell builder-shell">
+        <nav class="builder-topbar" aria-label="Builder navigation">
+            <a class="brand" href="{{ url_for('main.dashboard') }}">
+                <span class="brand-mark" aria-hidden="true">P</span>
+                <span>Portfolio Forge</span>
+            </a>
+            <div class="topbar-actions">
+                <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle theme" title="Switch theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <span class="save-state-badge" id="save-state" data-state="idle">Draft Saved</span>
+                <a class="btn-secondary" href="{{ url_for('main.dashboard') }}">
+                    <i class="fa-solid fa-arrow-left"></i> Exit to Dashboard
+                </a>
+            </div>
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack" role="alert" aria-live="assertive">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}" data-flash-toast>
+                            <div class="flash-icon">
+                                {% if category == 'success' %}
+                                    <i class="fa-solid fa-circle-check"></i>
+                                {% elif category == 'error' %}
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flash-text">{{ message }}</div>
+                            <button type="button" class="flash-close" onclick="this.parentElement.remove()" aria-label="Dismiss alert">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <header class="builder-header-wrap">
+            <span class="eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> Guided 3-Step Wizard</span>
+            <h1>Craft Your <span class="gradient-text">Portfolio Identity</span></h1>
+            <p>Provide your information below. When ready, Gemini will architect your custom portfolio code.</p>
+        </header>
+
+        <!-- Wizard Steps Nav -->
+        <div class="wizard-steps-nav" role="tablist" aria-label="Builder steps">
+            <button type="button" class="wizard-step-tab is-active" data-step-button="profile" onclick="if(window.showStep) showStep('profile')">
+                <span class="step-num">1</span>
+                <span>Profile &amp; Identity</span>
+            </button>
+            <button type="button" class="wizard-step-tab" data-step-button="professional" onclick="if(window.showStep) showStep('professional')">
+                <span class="step-num">2</span>
+                <span>Technical Arsenal</span>
+            </button>
+            <button type="button" class="wizard-step-tab" data-step-button="portfolio" onclick="if(window.showStep) showStep('portfolio')">
+                <span class="step-num">3</span>
+                <span>AI Directives</span>
+            </button>
+        </div>
+
+        <form id="builder-form" novalidate>
+            <!-- STEP 1: PROFILE & IDENTITY -->
+            <div class="builder-step-panel" data-step-panel="profile">
+                <div class="glass-card builder-panel-card">
+                    <div class="panel-title-row">
+                        <h2>01. Personal Identity &amp; Assets</h2>
+                        <span class="eyebrow" style="margin-bottom:0;"><i class="fa-solid fa-user-tag"></i> Step 1 of 3</span>
+                    </div>
+
+                    <div class="form-2col-layout">
+                        <!-- Left Column: Media Uploads -->
+                        <div class="upload-column">
+                            <!-- Compulsory Photo -->
+                            <div class="upload-dropzone-box" id="photo-upload-card">
+                                {% if builder_state.wizard.profile.photo_url %}
+                                <img id="photo-preview-img" src="{{ builder_state.wizard.profile.photo_url }}" alt="Profile preview" class="avatar-preview-circle">
+                                <div id="photo-preview-placeholder" class="avatar-placeholder-circle is-hidden"><i class="fa-solid fa-camera"></i></div>
+                                {% else %}
+                                <img id="photo-preview-img" src="" alt="Profile preview" class="avatar-preview-circle is-hidden">
+                                <div id="photo-preview-placeholder" class="avatar-placeholder-circle"><i class="fa-solid fa-camera"></i></div>
+                                {% endif %}
+                                <div class="upload-info-text">
+                                    <h4 id="photo-status-title">{% if builder_state.wizard.profile.photo_url %}Photo Attached{% else %}Profile Photo *{% endif %}</h4>
+                                    <p id="photo-help-text">JPG, PNG or WEBP (Max 5MB)</p>
+                                </div>
+                                <div class="upload-btn-row">
+                                    <input type="file" id="wizard-photo-file" accept=".jpg,.jpeg,.png,.webp" class="is-hidden" style="display:none;">
+                                    <input type="hidden" id="wizard-photo" value="{{ builder_state.wizard.profile.photo_url }}">
+                                    <button type="button" class="btn-upload-action" id="btn-trigger-photo-upload">
+                                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                                        <span id="photo-btn-label">{% if builder_state.wizard.profile.photo_url %}Change Photo{% else %}Upload Photo{% endif %}</span>
+                                    </button>
+                                    <button type="button" class="btn-remove-action {% if not builder_state.wizard.profile.photo_url %}is-hidden{% endif %}" id="btn-remove-photo" {% if not builder_state.wizard.profile.photo_url %}style="display:none;"{% endif %}>
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Optional Resume -->
+                            <div class="upload-dropzone-box" id="resume-upload-card">
+                                <div class="avatar-placeholder-circle" style="color: var(--accent-emerald); background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25);">
+                                    <i class="fa-solid fa-file-lines"></i>
+                                </div>
+                                <div class="upload-info-text">
+                                    <h4 id="resume-status-title">{% if builder_state.wizard.profile.resume_url %}CV Attached{% else %}Resume / CV (Optional){% endif %}</h4>
+                                    <p id="resume-help-text">PDF or DOCX (Max 10MB)</p>
+                                </div>
+                                <div class="upload-btn-row">
+                                    <input type="file" id="wizard-resume-file" accept=".pdf,.doc,.docx" class="is-hidden" style="display:none;">
+                                    <input type="hidden" id="wizard-resume" value="{{ builder_state.wizard.profile.resume_url }}">
+                                    <button type="button" class="btn-upload-action" id="btn-trigger-resume-upload">
+                                        <i class="fa-solid fa-paperclip"></i>
+                                        <span id="resume-btn-label">{% if builder_state.wizard.profile.resume_url %}Change CV{% else %}Upload CV{% endif %}</span>
+                                    </button>
+                                    <button type="button" class="btn-remove-action {% if not builder_state.wizard.profile.resume_url %}is-hidden{% endif %}" id="btn-remove-resume" {% if not builder_state.wizard.profile.resume_url %}style="display:none;"{% endif %}>
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Form Inputs -->
+                        <div class="form-grid-fields">
+                            <div class="form-group-field">
+                                <label for="portfolio-name">Portfolio Draft Name <span class="required">*</span></label>
+                                <input class="form-input-control" id="portfolio-name" name="portfolio_name" required maxlength="150" value="{{ builder_state.portfolio.name }}">
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="portfolio-status">Status</label>
+                                <select class="form-input-control" id="portfolio-status" name="status">
+                                    <option value="draft" {% if builder_state.portfolio.status == 'draft' %}selected{% endif %}>Draft</option>
+                                    <option value="published" {% if builder_state.portfolio.status == 'published' %}selected{% endif %}>Published</option>
+                                    <option value="archived" {% if builder_state.portfolio.status == 'archived' %}selected{% endif %}>Archived</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="wizard-name">Full Name <span class="required">*</span></label>
+                                <input class="form-input-control" id="wizard-name" maxlength="150" value="{{ builder_state.wizard.profile.name }}" placeholder="e.g. Soundira Rajan">
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="wizard-title">Professional Title <span class="required">*</span></label>
+                                <input class="form-input-control" id="wizard-title" maxlength="180" value="{{ builder_state.wizard.profile.professional_title }}" placeholder="e.g. Full Stack Developer">
+                            </div>
+
+                            <div class="form-group-field field-col-span-2">
+                                <label for="wizard-introduction">Professional Bio / Introduction</label>
+                                <textarea class="form-input-control" id="wizard-introduction" rows="3" maxlength="2000" placeholder="Brief summary of your technical background, passions, and core focus...">{{ builder_state.wizard.profile.introduction }}</textarea>
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="wizard-email">Contact Email</label>
+                                <input class="form-input-control" id="wizard-email" type="email" maxlength="320" value="{{ builder_state.wizard.profile.email }}">
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="wizard-phone">Phone Number</label>
+                                <input class="form-input-control" id="wizard-phone" maxlength="40" value="{{ builder_state.wizard.profile.phone }}">
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="wizard-location">Location</label>
+                                <input class="form-input-control" id="wizard-location" maxlength="150" value="{{ builder_state.wizard.profile.location }}" placeholder="e.g. San Francisco, CA">
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="wizard-website">Personal Website / Domain</label>
+                                <input class="form-input-control" id="wizard-website" type="url" maxlength="500" value="{{ builder_state.wizard.profile.website_url }}">
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="wizard-github"><i class="fa-brands fa-github"></i> GitHub Profile URL</label>
+                                <input class="form-input-control" id="wizard-github" type="url" maxlength="500" value="{{ builder_state.wizard.profile.github_url }}" placeholder="https://github.com/username">
+                            </div>
+
+                            <div class="form-group-field">
+                                <label for="wizard-linkedin"><i class="fa-brands fa-linkedin"></i> LinkedIn Profile URL</label>
+                                <input class="form-input-control" id="wizard-linkedin" type="url" maxlength="500" value="{{ builder_state.wizard.profile.linkedin_url }}" placeholder="https://linkedin.com/in/username">
+                            </div>
+
+                            <div class="form-group-field field-col-span-2">
+                                <label for="wizard-other-links">Other Social Links (One per line: Label|URL)</label>
+                                <textarea class="form-input-control" id="wizard-other-links" rows="2" maxlength="1000" placeholder="Twitter|https://twitter.com/username&#10;Dribbble|https://dribbble.com/username">{% for link in builder_state.wizard.profile.other_links %}{{ link.label }}|{{ link.url }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-actions-footer">
+                        <div></div>
+                        <button type="button" class="btn-primary" data-next-step="professional" onclick="if(window.showStep) showStep('professional')">
+                            <span>Next: Technical Arsenal</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: TECHNICAL ARSENAL -->
+            <div class="builder-step-panel is-hidden" data-step-panel="professional">
+                <div class="glass-card builder-panel-card">
+                    <div class="panel-title-row">
+                        <h2>02. Technical Arsenal &amp; Experience</h2>
+                        <span class="eyebrow" style="margin-bottom:0;"><i class="fa-solid fa-code"></i> Step 2 of 3</span>
+                    </div>
+
+                    <!-- Skills Cloud -->
+                    <div class="form-group-field" style="margin-bottom: 30px;">
+                        <label for="wizard-skill-input">Technical Skills &amp; Stack <span class="required">*</span></label>
+                        <div class="skills-input-row">
+                            <input class="form-input-control" id="wizard-skill-input" type="text" maxlength="100" placeholder="Type a skill (e.g. Python, React, TypeScript, Docker) and press Enter" autocomplete="off">
+                            <button type="button" class="btn-secondary" id="wizard-add-skill">
+                                <i class="fa-solid fa-plus"></i> Add Skill
+                            </button>
+                        </div>
+                        <div class="skills-chips-list" id="wizard-skills-list"></div>
+                    </div>
+
+                    <!-- Work Experience -->
+                    <div class="form-group-field" style="margin-bottom: 30px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <label style="font-size:1.1rem; color:#fff;"><i class="fa-solid fa-briefcase"></i> Work Experience</label>
+                            <button type="button" class="btn-secondary" id="wizard-add-experience" style="font-size:0.78rem;">
+                                <i class="fa-solid fa-plus"></i> Add Position
+                            </button>
+                        </div>
+                        <div id="wizard-experience-list"></div>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="form-group-field" style="margin-bottom: 30px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <label style="font-size:1.1rem; color:#fff;"><i class="fa-solid fa-graduation-cap"></i> Education</label>
+                            <button type="button" class="btn-secondary" id="wizard-add-education" style="font-size:0.78rem;">
+                                <i class="fa-solid fa-plus"></i> Add Degree
+                            </button>
+                        </div>
+                        <div id="wizard-education-list"></div>
+                    </div>
+
+                    <!-- Certifications & Achievements -->
+                    <div class="form-grid-fields">
+                        <div class="form-group-field">
+                            <label for="wizard-certifications">Certifications (One per line)</label>
+                            <textarea class="form-input-control" id="wizard-certifications" rows="3">{% for cert in builder_state.wizard.professional.certifications %}{{ cert.name }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+                        </div>
+
+                        <div class="form-group-field">
+                            <label for="wizard-achievements">Key Achievements / Awards (One per line)</label>
+                            <textarea class="form-input-control" id="wizard-achievements" rows="3">{% for a in builder_state.wizard.professional.achievements %}{{ a.title }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="step-actions-footer">
+                        <button type="button" class="btn-secondary" data-prev-step="profile" onclick="if(window.showStep) showStep('profile')">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Back: Profile</span>
+                        </button>
+                        <button type="button" class="btn-primary" data-next-step="portfolio" onclick="if(window.showStep) showStep('portfolio')">
+                            <span>Next: AI Directives</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: PORTFOLIO & AI DIRECTIVES -->
+            <div class="builder-step-panel is-hidden" data-step-panel="portfolio">
+                <div class="glass-card builder-panel-card">
+                    <div class="panel-title-row">
+                        <h2>03. AI Directives &amp; Design Directives</h2>
+                        <span class="eyebrow" style="margin-bottom:0;"><i class="fa-solid fa-wand-magic-sparkles"></i> Step 3 of 3</span>
+                    </div>
+
+                    <!-- Projects -->
+                    <div class="form-group-field" style="margin-bottom: 30px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <label style="font-size:1.1rem; color:#fff;"><i class="fa-solid fa-laptop-code"></i> Featured Projects</label>
+                            <button type="button" class="btn-secondary" id="wizard-add-project" style="font-size:0.78rem;">
+                                <i class="fa-solid fa-plus"></i> Add Project
+                            </button>
+                        </div>
+                        <div id="wizard-projects-list"></div>
+                    </div>
+
+                    <!-- Design Preferences Grid -->
+                    <div class="form-grid-fields" style="margin-bottom: 24px;">
+                        <div class="form-group-field">
+                            <label for="wizard-theme"><i class="fa-solid fa-palette"></i> Color Theme</label>
+                            <select class="form-input-control" id="wizard-theme">
+                                <option value="auto" {% if not builder_state.wizard.portfolio.design_preferences.theme or builder_state.wizard.portfolio.design_preferences.theme in ['auto', 'none', ''] %}selected{% endif %}>No Preference (AI Decides)</option>
+                                <option value="dark" {% if builder_state.wizard.portfolio.design_preferences.theme == 'dark' %}selected{% endif %}>Obsidian Dark (Recommended)</option>
+                                <option value="light" {% if builder_state.wizard.portfolio.design_preferences.theme == 'light' %}selected{% endif %}>Clean Minimalist Light</option>
+                                <option value="milk_green" {% if builder_state.wizard.portfolio.design_preferences.theme == 'milk_green' %}selected{% endif %}>Milk Green / Sage &amp; Mint</option>
+                                <option value="emerald" {% if builder_state.wizard.portfolio.design_preferences.theme == 'emerald' %}selected{% endif %}>Emerald Glow</option>
+                                <option value="indigo" {% if builder_state.wizard.portfolio.design_preferences.theme == 'indigo' %}selected{% endif %}>Midnight Indigo &amp; Slate</option>
+                                <option value="cyan" {% if builder_state.wizard.portfolio.design_preferences.theme == 'cyan' %}selected{% endif %}>Cyber Cyan &amp; Neon</option>
+                                <option value="crimson" {% if builder_state.wizard.portfolio.design_preferences.theme == 'crimson' %}selected{% endif %}>Crimson &amp; Velvet Red</option>
+                                <option value="violet" {% if builder_state.wizard.portfolio.design_preferences.theme == 'violet' %}selected{% endif %}>Purple Galaxy &amp; Violet</option>
+                                <option value="amber" {% if builder_state.wizard.portfolio.design_preferences.theme == 'amber' %}selected{% endif %}>Sunset Amber &amp; Warm Gold</option>
+                                <option value="monochrome" {% if builder_state.wizard.portfolio.design_preferences.theme == 'monochrome' %}selected{% endif %}>Monochrome High-Contrast</option>
+                                <option value="nordic" {% if builder_state.wizard.portfolio.design_preferences.theme == 'nordic' %}selected{% endif %}>Nordic Frosted Glass</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group-field">
+                            <label for="wizard-style"><i class="fa-solid fa-shapes"></i> Portfolio Style</label>
+                            <select class="form-input-control" id="wizard-style">
+                                <option value="auto" {% if not builder_state.wizard.portfolio.design_preferences.style or builder_state.wizard.portfolio.design_preferences.style in ['auto', 'none', ''] %}selected{% endif %}>No Preference (AI Decides)</option>
+                                <option value="modern" {% if builder_state.wizard.portfolio.design_preferences.style == 'modern' %}selected{% endif %}>Modern Bento Grid (Recommended)</option>
+                                <option value="minimal" {% if builder_state.wizard.portfolio.design_preferences.style == 'minimal' %}selected{% endif %}>Minimalist Clean</option>
+                                <option value="glassmorphism" {% if builder_state.wizard.portfolio.design_preferences.style == 'glassmorphism' %}selected{% endif %}>Glassmorphism &amp; Frosted Glass</option>
+                                <option value="terminal" {% if builder_state.wizard.portfolio.design_preferences.style == 'terminal' %}selected{% endif %}>Developer Terminal</option>
+                                <option value="creative" {% if builder_state.wizard.portfolio.design_preferences.style == 'creative' %}selected{% endif %}>Creative Showcase &amp; Magazine</option>
+                                <option value="professional" {% if builder_state.wizard.portfolio.design_preferences.style == 'professional' %}selected{% endif %}>Executive &amp; Corporate Tech</option>
+                                <option value="futuristic" {% if builder_state.wizard.portfolio.design_preferences.style == 'futuristic' %}selected{% endif %}>Cyberpunk &amp; Futuristic HUD</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group-field field-col-span-2">
+                            <label for="wizard-animation"><i class="fa-solid fa-wand-magic-sparkles"></i> Animation</label>
+                            <select class="form-input-control" id="wizard-animation">
+                                <option value="auto" {% if not builder_state.wizard.portfolio.design_preferences.animation or builder_state.wizard.portfolio.design_preferences.animation in ['auto', 'none', ''] %}selected{% endif %}>No Preference (AI Decides)</option>
+                                <option value="smooth" {% if builder_state.wizard.portfolio.design_preferences.animation in ['smooth', 'subtle'] %}selected{% endif %}>Silky Smooth &amp; Floating (Recommended)</option>
+                                <option value="moderate" {% if builder_state.wizard.portfolio.design_preferences.animation == 'moderate' %}selected{% endif %}>Subtle &amp; Moderate Scroll Reveals</option>
+                                <option value="dynamic" {% if builder_state.wizard.portfolio.design_preferences.animation in ['dynamic', 'rich'] %}selected{% endif %}>Luminous Glowing &amp; Dynamic</option>
+                                <option value="interactive" {% if builder_state.wizard.portfolio.design_preferences.animation == 'interactive' %}selected{% endif %}>Interactive Micro-Interactions &amp; Hover Lift</option>
+                                <option value="none" {% if builder_state.wizard.portfolio.design_preferences.animation == 'none' %}selected{% endif %}>Static &amp; Minimal (Reduced Motion)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group-field field-col-span-2">
+                            <label for="wizard-design-prompt"><i class="fa-solid fa-pen-nib"></i> Custom AI Design Directives (Optional)</label>
+                            <textarea class="form-input-control" id="wizard-design-prompt" rows="3" placeholder="e.g. Make project cards high-contrast bento cards with glowing borders and prominent GitHub repo links...">{{ builder_state.wizard.portfolio.design_prompt }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Hidden supporting fields to prevent script error -->
+                    <div style="display:none;">
+                        <textarea id="wizard-services">{% for s in builder_state.wizard.portfolio.services %}{{ s.name if s is mapping else s }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+                        <textarea id="wizard-languages">{% for l in builder_state.wizard.portfolio.languages %}{{ l.language if l is mapping else l }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+                        <textarea id="wizard-overview">{{ builder_state.wizard.portfolio.overview }}</textarea>
+                        <div id="wizard-custom-sections-list"></div>
+                        <button type="button" id="wizard-add-custom-section"></button>
+                        <div id="builder-error"></div>
+                    </div>
+
+                    <div class="step-actions-footer">
+                        <button type="button" class="btn-secondary" data-prev-step="professional" onclick="if(window.showStep) showStep('professional')">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Back: Arsenal</span>
+                        </button>
+                        <button type="button" class="btn-primary" id="generate-portfolio" style="padding: 14px 28px; font-size: 1rem;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Generate Portfolio</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Glassmorphic AI Generation Loading Modal -->
+        <div id="ai-generation-modal" class="ai-gen-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="ai-gen-title">
+            <div class="ai-gen-backdrop"></div>
+            <div class="ai-gen-card">
+                <!-- Glowing Holographic AI Core Orb -->
+                <div class="ai-gen-orb-wrap">
+                    <div class="ai-gen-ring-glow"></div>
+                    <div class="ai-gen-ring-spinner"></div>
+                    <div class="ai-gen-core-icon">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                </div>
+
+                <div class="ai-gen-badge">
+                    <span class="pulse-dot"></span>
+                    <span>Gemini AI Engine Active</span>
+                </div>
+
+                <h3 id="ai-gen-title" class="ai-gen-title">Architecting Your <span class="gradient-text">Portfolio</span></h3>
+                
+                <p id="ai-gen-status-text" class="ai-gen-status-text">Analyzing your experience & skills with Gemini...</p>
+
+                <!-- Dynamic Progress Bar -->
+                <div class="ai-gen-progress-track">
+                    <div id="ai-gen-progress-bar" class="ai-gen-progress-bar"></div>
+                </div>
+
+                <!-- 4 Step Progress Pills -->
+                <div class="ai-gen-stages">
+                    <span id="ai-stage-1" class="ai-stage-item is-active"><i class="fa-solid fa-circle-check"></i> Parse Data</span>
+                    <span id="ai-stage-2" class="ai-stage-item"><i class="fa-solid fa-layer-group"></i> Layout & Bento</span>
+                    <span id="ai-stage-3" class="ai-stage-item"><i class="fa-solid fa-code"></i> Glassmorphism</span>
+                    <span id="ai-stage-4" class="ai-stage-item"><i class="fa-solid fa-rocket"></i> Launch Preview</span>
+                </div>
+
+                <p class="ai-gen-tip"><i class="fa-solid fa-shield-halved"></i> 100% Data Preservation &bull; Zero Truncation &bull; Tailored Dark Theme</p>
+            </div>
+        </div>
+
+        <!-- Glassmorphism Validation Alert Popup -->
+        <div id="validation-toast" class="validation-toast is-hidden" role="alert" aria-live="assertive">
+            <div id="validation-toast-icon" class="validation-toast-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="validation-toast-content">
+                <div id="validation-toast-title" class="validation-toast-title">Validation Alert</div>
+                <div id="validation-toast-message" class="validation-toast-message">Please check required fields.</div>
+            </div>
+            <button type="button" id="validation-toast-close" class="validation-toast-close" aria-label="Dismiss alert">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </main>
+
+    <script>
+        window.__BUILDER_STATE__ = {{ builder_state | tojson }};
+        window.__CSRF_TOKEN__ = "{{ csrf_token }}";
+
+        // Instant reliable step switching
+        window.showStep = function(step) {
+            if (!step) return;
+            document.querySelectorAll('[data-step-panel]').forEach(function(panel) {
+                var isMatch = panel.getAttribute('data-step-panel') === step;
+                panel.classList.toggle('is-hidden', !isMatch);
+                panel.style.display = isMatch ? 'block' : 'none';
+            });
+            document.querySelectorAll('[data-step-button]').forEach(function(btn) {
+                var isMatch = btn.getAttribute('data-step-button') === step;
+                btn.classList.toggle('is-active', isMatch);
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/builder.js') }}?v={{ range(10000, 999999) | random }}"></script>
+</body>
+</html>

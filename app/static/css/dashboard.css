@@ -1,0 +1,444 @@
+/* Dashboard Layout */
+.dashboard-shell {
+    padding-bottom: 90px;
+}
+
+.dashboard-header-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    padding: 50px 0 36px;
+    flex-wrap: wrap;
+}
+
+.dashboard-headline-wrap h1 {
+    font-size: clamp(2.2rem, 4vw, 3.2rem);
+    margin-bottom: 8px;
+}
+
+.dashboard-headline-wrap p {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+}
+
+.dashboard-user-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-radius: var(--radius-lg);
+}
+
+.dashboard-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.dashboard-avatar-initial {
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.user-info-text strong {
+    display: block;
+    color: #ffffff;
+    font-size: 0.95rem;
+}
+
+.user-info-text span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* KPI Bento Grid */
+.dashboard-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 44px;
+}
+
+.kpi-card {
+    padding: 22px 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.kpi-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.kpi-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    color: var(--accent-cyan);
+    font-size: 1.1rem;
+}
+
+/* Section Header & Toolbar */
+.portfolios-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.toolbar-title-group h2 {
+    font-size: 1.7rem;
+}
+
+/* Portfolio Cards Grid */
+.portfolio-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+}
+
+.portfolio-card-item {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 330px;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.portfolio-card-item:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.55);
+}
+
+.portfolio-card-preview-header {
+    height: 120px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--accent-cyan);
+    font-size: 1.8rem;
+    position: relative;
+}
+
+.portfolio-card-body {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.card-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.card-title-row h3 {
+    font-size: 1.15rem;
+    color: #ffffff;
+    line-height: 1.3;
+}
+
+.status-pill-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+}
+
+.status-pill-badge.draft {
+    background: rgba(234, 179, 8, 0.12);
+    color: #facc15;
+    border: 1px solid rgba(234, 179, 8, 0.28);
+}
+
+.status-pill-badge.published {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.status-pill-badge.archived {
+    background: rgba(148, 163, 184, 0.12);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.portfolio-meta-dates {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.portfolio-meta-dates span strong {
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+}
+
+.card-button-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.card-action-btn {
+    padding: 7px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+}
+
+.card-action-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.card-action-btn.primary-action {
+    background: rgba(37, 99, 235, 0.2);
+    border-color: rgba(37, 99, 235, 0.4);
+    color: #60a5fa;
+}
+
+.card-action-btn.primary-action:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.card-action-btn.delete-action {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.card-action-btn.delete-action:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #ffffff;
+    border-color: rgba(239, 68, 68, 0.45);
+}
+
+/* Empty State */
+.empty-portfolio-card {
+    padding: 60px 30px;
+    text-align: center;
+    max-width: 600px;
+    margin: 30px auto;
+}
+
+.empty-icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 20px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    color: #818cf8;
+    font-size: 1.6rem;
+}
+
+.empty-portfolio-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.empty-portfolio-card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 26px;
+}
+
+@media (max-width: 900px) {
+    .dashboard-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .portfolio-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Light Theme Overrides for Dashboard */
+html[data-theme="light"] .dashboard-headline-wrap h1,
+[data-theme="light"] .dashboard-headline-wrap h1 {
+    color: #0f172a;
+}
+
+html[data-theme="light"] .dashboard-headline-wrap p,
+[data-theme="light"] .dashboard-headline-wrap p {
+    color: #475569;
+}
+
+html[data-theme="light"] .user-info-text strong,
+[data-theme="light"] .user-info-text strong {
+    color: #0f172a;
+}
+
+html[data-theme="light"] .user-info-text span,
+[data-theme="light"] .user-info-text span {
+    color: #64748b;
+}
+
+html[data-theme="light"] .dashboard-avatar,
+[data-theme="light"] .dashboard-avatar {
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="light"] .kpi-label,
+[data-theme="light"] .kpi-label {
+    color: #64748b;
+}
+
+html[data-theme="light"] .kpi-value,
+[data-theme="light"] .kpi-value {
+    color: #0f172a;
+}
+
+html[data-theme="light"] .kpi-icon-box,
+[data-theme="light"] .kpi-icon-box {
+    background: rgba(2, 132, 199, 0.08);
+    border-color: rgba(2, 132, 199, 0.25);
+    color: #0284c7;
+}
+
+html[data-theme="light"] .portfolios-toolbar-row,
+[data-theme="light"] .portfolios-toolbar-row {
+    border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+html[data-theme="light"] .toolbar-title-group h2,
+[data-theme="light"] .toolbar-title-group h2 {
+    color: #0f172a;
+}
+
+html[data-theme="light"] .portfolio-card-item,
+[data-theme="light"] .portfolio-card-item {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.05);
+}
+
+html[data-theme="light"] .portfolio-card-item:hover,
+[data-theme="light"] .portfolio-card-item:hover {
+    box-shadow: 0 20px 40px -6px rgba(0, 0, 0, 0.1);
+    border-color: rgba(148, 163, 184, 0.95);
+}
+
+html[data-theme="light"] .portfolio-card-preview-header,
+[data-theme="light"] .portfolio-card-preview-header {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+    color: #0284c7;
+}
+
+html[data-theme="light"] .card-title-row h3,
+[data-theme="light"] .card-title-row h3 {
+    color: #0f172a;
+}
+
+html[data-theme="light"] .portfolio-meta-dates,
+[data-theme="light"] .portfolio-meta-dates {
+    border-top: 1px solid rgba(226, 232, 240, 0.95);
+    color: #64748b;
+}
+
+html[data-theme="light"] .portfolio-meta-dates span strong,
+[data-theme="light"] .portfolio-meta-dates span strong {
+    color: #334155;
+}
+
+html[data-theme="light"] .card-action-btn,
+[data-theme="light"] .card-action-btn {
+    background: rgba(0, 0, 0, 0.04);
+    color: #334155;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="light"] .card-action-btn:hover,
+[data-theme="light"] .card-action-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: #0f172a;
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="light"] .empty-state-card,
+[data-theme="light"] .empty-state-card {
+    background: #ffffff;
+    border-color: rgba(203, 213, 225, 0.95);
+    box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.06);
+}
+
+html[data-theme="light"] .empty-portfolio-card h3,
+[data-theme="light"] .empty-portfolio-card h3 {
+    color: #0f172a;
+}
+
+html[data-theme="light"] .empty-portfolio-card p,
+[data-theme="light"] .empty-portfolio-card p {
+    color: #64748b;
+}
+
+html[data-theme="light"] .empty-icon-circle,
+[data-theme="light"] .empty-icon-circle {
+    background: rgba(2, 132, 199, 0.08);
+    border-color: rgba(2, 132, 199, 0.25);
+    color: #0284c7;
+}
+
+

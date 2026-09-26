@@ -1,0 +1,1 @@
+{% set nav = portfolio.composition.navigation %}<nav class="portfolio-navigation navigation-{{ nav }}" aria-label="Portfolio navigation"><strong>{{ p.name }}</strong>{% if nav != 'minimal' %}<div>{% for item in portfolio.navigation_links %}<a href="#{{ item.key }}">{{ item.key|replace('_',' ')|title }}</a>{% endfor %}</div>{% endif %}</nav>
