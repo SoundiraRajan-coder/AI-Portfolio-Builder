@@ -1,8 +1,7 @@
-import json
 import logging
-from urllib.error import HTTPError, URLError
-from urllib.parse import quote
-from urllib.request import Request, urlopen
+from functools import lru_cache
+
+from supabase import create_client
 
 
 logger = logging.getLogger(__name__)
@@ -10,6 +9,24 @@ logger = logging.getLogger(__name__)
 
 class ProfileImageStorageError(RuntimeError):
     pass
+
+
+@lru_cache(maxsize=1)
+def _get_supabase_client(supabase_url, service_role_key):
+    return create_client(supabase_url, service_role_key)
+
+
+def _log_storage_error(exc):
+    status = getattr(exc, "status_code", None) or getattr(exc, "statusCode", None)
+    code = getattr(exc, "code", None) or getattr(exc, "error", None)
+    message = getattr(exc, "message", None)
+    logger.warning(
+        "Supabase Storage upload failed: exception_type=%s status=%s code=%s message=%s",
+        type(exc).__name__,
+        status,
+        code,
+        message,
+    )
 
 
 def upload_profile_image(*, supabase_url, service_role_key, bucket, object_path, content, content_type):
@@ -27,47 +44,20 @@ def upload_profile_image(*, supabase_url, service_role_key, bucket, object_path,
             f"Supabase Storage configuration is missing: {', '.join(missing_settings)}."
         )
 
-    base_url = supabase_url.rstrip("/")
-    encoded_bucket = quote(bucket, safe="")
-    encoded_path = quote(object_path, safe="/")
-    endpoint = f"{base_url}/storage/v1/object/{encoded_bucket}/{encoded_path}"
-    request = Request(
-        endpoint,
-        data=content,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {service_role_key}",
-            "apikey": service_role_key,
-            "Content-Type": content_type,
-            "x-upsert": "true",
-        },
-    )
-
     try:
-        with urlopen(request, timeout=15) as response:
-            if response.status not in {200, 201}:
-                raise ProfileImageStorageError("Supabase Storage rejected the upload.")
-    except HTTPError as exc:
-        if exc.code == 400:
-            try:
-                response_data = json.loads(exc.read(4096).decode("utf-8"))
-            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-                logger.warning("Supabase Storage upload rejected: status=%s", exc.code)
-            else:
-                if isinstance(response_data, dict):
-                    logger.warning(
-                        "Supabase Storage upload rejected: status=%s code=%s error=%s message=%s",
-                        exc.code,
-                        response_data.get("code"),
-                        response_data.get("error"),
-                        response_data.get("message"),
-                    )
-                else:
-                    logger.warning("Supabase Storage upload rejected: status=%s", exc.code)
-        raise ProfileImageStorageError(
-            f"Supabase Storage upload was rejected with HTTP {exc.code}."
-        ) from exc
-    except (URLError, ValueError, OSError) as exc:
-        raise ProfileImageStorageError("Supabase Storage could not be reached.") from exc
-
-    return f"{base_url}/storage/v1/object/public/{encoded_bucket}/{encoded_path}"
+        supabase = _get_supabase_client(supabase_url, service_role_key)
+        supabase.storage.get_bucket(bucket)
+        storage_bucket = supabase.storage.from_(bucket)
+        storage_bucket.upload(
+            path=object_path,
+            file=content,
+            file_options={
+                "content-type": content_type,
+                "cache-control": "3600",
+                "upsert": "true",
+            },
+        )
+        return storage_bucket.get_public_url(object_path)
+    except Exception as exc:
+        _log_storage_error(exc)
+        raise ProfileImageStorageError("Supabase Storage upload failed.") from exc
