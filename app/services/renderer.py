@@ -1,4 +1,6 @@
 from copy import deepcopy
+from html import escape
+import re
 from urllib.parse import urlparse
 
 from flask import current_app, has_request_context, render_template
@@ -50,7 +52,7 @@ def render_portfolio(portfolio_data):
         if isinstance(saved_spec, dict) and saved_spec.get("custom_html"):
             custom_html = saved_spec["custom_html"]
             if isinstance(custom_html, str) and len(custom_html) > 300 and ("<body" in custom_html.lower() or "<section" in custom_html.lower() or "<main" in custom_html.lower()):
-                return custom_html
+                return _bind_profile_image(custom_html, source.get("wizard", {}))
 
         context = build_render_context(portfolio_data)
         if not has_request_context() and current_app:
@@ -87,6 +89,48 @@ def _safe_css_url(value):
     if any(character in value for character in ("'", '"', "\\", "(", ")", "<", ">", "\r", "\n")):
         return ""
     return value
+
+
+def _bind_profile_image(html, wizard):
+    profile = wizard.get("profile", {}) if isinstance(wizard, dict) else {}
+    photo_url = _safe_url(profile.get("photo_url"))
+    if not photo_url:
+        return html
+
+    name = str(profile.get("name") or "").strip().lower()
+    safe_url = escape(photo_url, quote=True)
+
+    def replace_image(match):
+        tag = match.group(0)
+        tag_lower = tag.lower()
+        alt_match = re.search(r'\balt\s*=\s*["\']([^"\']*)["\']', tag, re.IGNORECASE)
+        alt_text = alt_match.group(1).strip().lower() if alt_match else ""
+        is_profile_image = (
+            "data-profile-image" in tag_lower
+            or any(keyword in alt_text for keyword in ("profile", "avatar", "portrait", "headshot"))
+            or (name and name in alt_text)
+        )
+        if not is_profile_image:
+            return tag
+
+        if re.search(r'\bsrc\s*=\s*["\'][^"\']*["\']', tag, re.IGNORECASE):
+            tag = re.sub(
+                r'\bsrc\s*=\s*["\'][^"\']*["\']',
+                f'src="{safe_url}"',
+                tag,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+        else:
+            tag = tag[:-1] + f' src="{safe_url}">'
+
+        if "data-profile-image" not in tag.lower():
+            tag = tag[:-1] + ' data-profile-image="true">'
+        if "onerror=" not in tag.lower():
+            tag = tag[:-1] + ' onerror="this.style.display=\'none\'">'
+        return tag
+
+    return re.sub(r"<img\b[^>]*>", replace_image, html, flags=re.IGNORECASE)
 
 
 def _module_context(key, composition):

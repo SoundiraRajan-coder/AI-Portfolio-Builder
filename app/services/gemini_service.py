@@ -610,6 +610,7 @@ def generate_creative_portfolio_html(wizard_data: dict, design_prompt: str) -> s
         "1. IF A SPECIFIC COLOR THEME IS SELECTED OR REQUESTED:\n"
         "   - You MUST tailor the entire visual design (page background, card fills, glass borders, gradient texts, button colors, and accent glows) to that exact color palette!\n"
         "2. IF NO PREFERENCE / AUTO IS SELECTED: Use sleek modern aesthetics tailored to the user's domain.\n\n"
+        "3. COLOR CONTRAST: Never place white or pale text on a light background. Before returning HTML, verify readable contrast for navigation, hero text, body copy, and buttons.\n\n"
         "=== MANDATORY 100% DATA PRESERVATION RULE (CRITICAL) ===\n"
         "You MUST render EVERY SINGLE ITEM from the provided data inventory below into its own dedicated HTML card, row, badge, or pill. "
         "NEVER truncate, summarize, merge, or omit any project, job experience, education entry, certification, achievement, service, language, or custom section. "
@@ -823,9 +824,6 @@ def _extract_and_sanitize_html(text: str) -> str:
     html = re.sub(r"<script\b[^>]*>[\s\S]*?<\/script>", sanitize_script, html, flags=re.IGNORECASE)
     html = re.sub(r"javascript:\s*", "", html, flags=re.IGNORECASE)
     html = re.sub(r"on\w+\s*=\s*[\"'][^\"']*[\"']", "", html, flags=re.IGNORECASE)
-
-    # Clean malformed img tags with stray URLs inside tag definition
-    html = re.sub(r'(<img\b[^>]*?)\s+https?://[^\s"\'>]+([\'"]?)', r'\1', html)
 
     # Ensure smooth scrolling on html tag without forcing dark mode over light themes
     if "<html" in html:
