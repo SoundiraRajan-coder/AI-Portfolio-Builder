@@ -56,10 +56,10 @@ Configure these variables in `.env`:
 
 ```env
 SECRET_KEY=your-local-flask-secret
-SUPABASE_DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@YOUR_HOST:5432/postgres?sslmode=require
+DATABASE_URL=postgresql://USER:PASSWORD@YOUR_PROJECT.pooler.supabase.com:6543/postgres?sslmode=require
 ```
 
-`SUPABASE_DATABASE_URL` is the PostgreSQL connection string from the Supabase dashboard. Use the Supabase pooler connection string when the dashboard recommends it for your environment. Keep the password in `.env`; never place this value in templates, JavaScript, or committed files. `DATABASE_URL` is also accepted as a fallback for deployment platforms, but `SUPABASE_DATABASE_URL` is the documented local variable.
+`DATABASE_URL` must use the Supabase Transaction Pooler connection string (port `6543`) for Vercel serverless deployments. Keep the password in `.env` or Vercel environment variables; never place it in templates, JavaScript, or committed files.
 
 ### Profile image storage
 
@@ -113,7 +113,7 @@ Start the app with `python run.py`, visit `http://127.0.0.1:5000/auth/login`, an
 
 The initial migration is in [`migrations/001_initial_schema.sql`](migrations/001_initial_schema.sql). Apply it through the Supabase project SQL Editor, followed by [`migrations/002_add_profile_phone.sql`](migrations/002_add_profile_phone.sql).
 
-The Flask application connects to PostgreSQL through `SUPABASE_DATABASE_URL`; no database credentials belong in the migration file.
+The Flask application connects to PostgreSQL through `DATABASE_URL`; no database credentials belong in the migration file.
 
 ## Current scope
 

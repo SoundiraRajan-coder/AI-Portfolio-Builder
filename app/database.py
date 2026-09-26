@@ -21,7 +21,8 @@ class DatabaseConnectionError(DatabaseError):
 # Try psycopg first, fallback to pure-Python pg8000 (immune to Windows AppLocker/DLL block policies)
 _USE_PSYCOPG = False
 try:
-    from psycopg_pool import ConnectionPool
+    from psycopg import OperationalError
+    from psycopg_pool import ConnectionPool, PoolTimeout
     from psycopg import Connection as _PsycopgConn
     _USE_PSYCOPG = True
 except Exception:
@@ -35,7 +36,7 @@ if not _USE_PSYCOPG:
         pg8000.dbapi.Cursor.__exit__ = lambda self, *args: self.close()
 
     class PG8000Pool:
-        def __init__(self, database_url, min_size=2, max_size=10, timeout=10.0):
+        def __init__(self, database_url, min_size=0, max_size=1, timeout=10.0):
             self.database_url = database_url
             self.min_size = min_size
             self.max_size = max_size
@@ -137,6 +138,9 @@ if not _USE_PSYCOPG:
 
 
 _pool = None
+_POOL_TIMEOUT_SECONDS = 10.0
+_POOL_MIN_SIZE = 0
+_POOL_MAX_SIZE = 1
 
 
 def _close_pool():
@@ -156,24 +160,26 @@ def get_pool():
     database_url = current_app.config.get("DATABASE_URL")
     if not database_url:
         raise DatabaseConfigurationError(
-            "SUPABASE_DATABASE_URL is not configured."
+            "DATABASE_URL is not configured."
         )
 
     if _pool is None or _pool.closed:
+        _log_database_port(database_url)
         if _USE_PSYCOPG:
             _pool = ConnectionPool(
                 conninfo=database_url,
-                min_size=2,
-                max_size=10,
-                timeout=10.0,
+                min_size=_POOL_MIN_SIZE,
+                max_size=_POOL_MAX_SIZE,
+                timeout=_POOL_TIMEOUT_SECONDS,
+                kwargs={"sslmode": "require", "prepare_threshold": None},
                 open=True,
             )
         else:
             _pool = PG8000Pool(
                 database_url=database_url,
-                min_size=2,
-                max_size=10,
-                timeout=10.0,
+                min_size=_POOL_MIN_SIZE,
+                max_size=_POOL_MAX_SIZE,
+                timeout=_POOL_TIMEOUT_SECONDS,
             )
     return _pool
 
@@ -182,13 +188,34 @@ def get_pool():
 def get_db_connection():
     """Checkout a PostgreSQL connection from the thread-safe connection pool."""
     pool = get_pool()
+    transient_errors = (PoolTimeout, OperationalError) if _USE_PSYCOPG else (DatabaseConnectionError,)
+
+    for attempt in range(2):
+        acquired = False
+        try:
+            with pool.connection(timeout=_POOL_TIMEOUT_SECONDS) as connection:
+                acquired = True
+                yield connection
+                return
+        except transient_errors as exc:
+            if acquired or attempt:
+                raise DatabaseConnectionError("Database connection could not be acquired.") from exc
+            current_app.logger.warning(
+                "Database connection checkout failed; retrying once: exception_type=%s",
+                type(exc).__name__,
+            )
+        except (DatabaseConfigurationError, DatabaseConnectionError):
+            raise
+        except Exception as exc:
+            raise DatabaseConnectionError from exc
+
+
+def _log_database_port(database_url):
     try:
-        with pool.connection() as connection:
-            yield connection
-    except (DatabaseConfigurationError, DatabaseConnectionError):
-        raise
-    except Exception as exc:
-        raise DatabaseConnectionError from exc
+        port = urllib.parse.urlparse(database_url).port
+    except ValueError:
+        port = None
+    current_app.logger.info("DATABASE_URL connection endpoint port=%s", port or "default")
 
 
 def check_database_connection():
@@ -200,13 +227,13 @@ def check_database_connection():
 
 
 def init_pool(app):
-    """Pre-initialize and warm up the database connection pool on application startup."""
+    """Initialize the lazy module-level connection pool for this serverless instance."""
     with app.app_context():
         try:
-            pool = get_pool()
-            with pool.connection(timeout=5.0) as connection:
-                with connection.cursor() as cursor:
-                    cursor.execute("SELECT 1")
-            app.logger.info("Database connection pool initialized and warmed up.")
+            get_pool()
+            app.logger.info("Database connection pool initialized for lazy checkout.")
         except Exception as exc:
-            app.logger.warning("Database connection pool startup warmup deferred: %s", exc)
+            app.logger.warning(
+                "Database connection pool startup initialization deferred: exception_type=%s",
+                type(exc).__name__,
+            )
