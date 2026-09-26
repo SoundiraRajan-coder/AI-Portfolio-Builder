@@ -30,6 +30,16 @@ let currentStep = "profile";
 let isGenerating = false;
 
 const safeText = (value) => String(value || "").trim();
+const getSafeImageUrl = (value, cacheBust = false) => {
+    try {
+        const url = new URL(safeText(value));
+        if (!/^https?:$/.test(url.protocol)) return "";
+        if (cacheBust) url.searchParams.set("preview", Date.now().toString());
+        return url.toString();
+    } catch (error) {
+        return "";
+    }
+};
 const readUploadResponse = async (response, fallbackMessage) => {
     const contentType = response.headers.get("content-type") || "";
     const responseText = await response.text();
@@ -944,6 +954,30 @@ const setupUploads = () => {
     const photoCard = document.querySelector("#photo-upload-card");
     const photoError = document.querySelector("#photo-field-error");
 
+    const showPhotoPlaceholder = () => {
+        if (photoPreview) {
+            photoPreview.removeAttribute("src");
+            photoPreview.classList.add("is-hidden");
+        }
+        if (photoPlaceholder) photoPlaceholder.classList.remove("is-hidden");
+    };
+    const showPhotoPreview = (url, cacheBust = false) => {
+        const previewUrl = getSafeImageUrl(url, cacheBust);
+        if (!previewUrl) {
+            showPhotoPlaceholder();
+            return false;
+        }
+        if (photoPreview) {
+            photoPreview.src = previewUrl;
+            photoPreview.classList.remove("is-hidden");
+        }
+        if (photoPlaceholder) photoPlaceholder.classList.add("is-hidden");
+        return true;
+    };
+
+    photoPreview?.addEventListener("error", showPhotoPlaceholder);
+    if (photoHidden?.value) showPhotoPreview(photoHidden.value);
+
     triggerPhoto?.addEventListener("click", () => photoFile?.click());
 
     photoFile?.addEventListener("change", async () => {
@@ -965,12 +999,11 @@ const setupUploads = () => {
                 body: formData,
             });
             const data = await readUploadResponse(response, "Profile image upload failed. Please try again.");
-            if (photoHidden) photoHidden.value = data.url;
-            if (photoPreview) {
-                photoPreview.src = data.url;
-                photoPreview.classList.remove("is-hidden");
+            if (!getSafeImageUrl(data.url)) {
+                throw new Error("Profile image upload did not return a valid image URL.");
             }
-            if (photoPlaceholder) photoPlaceholder.classList.add("is-hidden");
+            if (photoHidden) photoHidden.value = data.url;
+            showPhotoPreview(data.url, true);
             if (photoTitle) photoTitle.textContent = "Photo Uploaded";
             if (photoBtnLabel) photoBtnLabel.textContent = "Change Photo";
             if (removePhoto) removePhoto.classList.remove("is-hidden");
@@ -988,11 +1021,7 @@ const setupUploads = () => {
 
     removePhoto?.addEventListener("click", async () => {
         if (photoHidden) photoHidden.value = "";
-        if (photoPreview) {
-            photoPreview.src = "";
-            photoPreview.classList.add("is-hidden");
-        }
-        if (photoPlaceholder) photoPlaceholder.classList.remove("is-hidden");
+        showPhotoPlaceholder();
         if (photoTitle) photoTitle.textContent = "No photo uploaded";
         if (photoBtnLabel) photoBtnLabel.textContent = "Upload Photo";
         if (removePhoto) removePhoto.classList.add("is-hidden");

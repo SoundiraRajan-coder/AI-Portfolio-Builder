@@ -11,6 +11,18 @@ class ProfileImageStorageError(RuntimeError):
     pass
 
 
+def _missing_settings(supabase_url, service_role_key, bucket):
+    return [
+        name
+        for name, value in {
+            "SUPABASE_URL": supabase_url,
+            "SUPABASE_SERVICE_ROLE_KEY": service_role_key,
+            "SUPABASE_STORAGE_BUCKET": bucket,
+        }.items()
+        if not value
+    ]
+
+
 @lru_cache(maxsize=1)
 def _get_supabase_client(supabase_url, service_role_key):
     return create_client(supabase_url, service_role_key)
@@ -30,15 +42,7 @@ def _log_storage_error(exc):
 
 
 def upload_profile_image(*, supabase_url, service_role_key, bucket, object_path, content, content_type):
-    missing_settings = [
-        name
-        for name, value in {
-            "SUPABASE_URL": supabase_url,
-            "SUPABASE_SERVICE_ROLE_KEY": service_role_key,
-            "SUPABASE_STORAGE_BUCKET": bucket,
-        }.items()
-        if not value
-    ]
+    missing_settings = _missing_settings(supabase_url, service_role_key, bucket)
     if missing_settings:
         raise ProfileImageStorageError(
             f"Supabase Storage configuration is missing: {', '.join(missing_settings)}."
@@ -61,3 +65,17 @@ def upload_profile_image(*, supabase_url, service_role_key, bucket, object_path,
     except Exception as exc:
         _log_storage_error(exc)
         raise ProfileImageStorageError("Supabase Storage upload failed.") from exc
+
+
+def get_profile_image_public_url(*, supabase_url, service_role_key, bucket, object_path):
+    missing_settings = _missing_settings(supabase_url, service_role_key, bucket)
+    if missing_settings:
+        raise ProfileImageStorageError(
+            f"Supabase Storage configuration is missing: {', '.join(missing_settings)}."
+        )
+
+    try:
+        return _get_supabase_client(supabase_url, service_role_key).storage.from_(bucket).get_public_url(object_path)
+    except Exception as exc:
+        _log_storage_error(exc)
+        raise ProfileImageStorageError("Supabase Storage public URL could not be created.") from exc

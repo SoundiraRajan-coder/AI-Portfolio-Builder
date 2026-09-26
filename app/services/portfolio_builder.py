@@ -3,8 +3,11 @@ from datetime import date
 from uuid import UUID
 from urllib.parse import urlparse
 
+from flask import current_app
+
 from app.database import get_db_connection
 from app.services.design_spec import validate_portfolio_spec
+from app.services.profile_image_storage import ProfileImageStorageError, get_profile_image_public_url
 from app.services.portfolios import STATUS_VALUES
 
 SECTION_ORDER = ["about", "skills", "education", "experience", "projects", "certifications", "social"]
@@ -184,6 +187,7 @@ def get_builder_data(user_id, portfolio_id):
                                     cur_port["design_preferences"] = prev_port["design_preferences"]
 
     wizard = _normalize_wizard_data(wizard_metadata, profile_row, records)
+    _resolve_profile_image_url(wizard)
     # Normalize legacy flat records at runtime; no stored specification is changed.
     design_spec = validate_portfolio_spec(portfolio_row[4], wizard)
     return {
@@ -607,6 +611,27 @@ def _validate_wizard_profile(profile):
         _validate_date(result["date_of_birth"], "Date of birth")
     result["other_links"] = _validate_link_list(result["other_links"])
     return result
+
+
+def _resolve_profile_image_url(wizard):
+    profile = wizard.get("profile", {})
+    photo_url = str(profile.get("photo_url") or "").strip()
+    if not photo_url.startswith("profiles/") or "\\" in photo_url or ".." in photo_url:
+        return
+
+    try:
+        profile["photo_url"] = get_profile_image_public_url(
+            supabase_url=current_app.config.get("SUPABASE_URL"),
+            service_role_key=current_app.config.get("SUPABASE_SERVICE_ROLE_KEY"),
+            bucket=current_app.config.get("SUPABASE_STORAGE_BUCKET"),
+            object_path=photo_url,
+        )
+    except ProfileImageStorageError as exc:
+        current_app.logger.warning(
+            "Could not resolve saved profile image URL: exception_type=%s",
+            type(exc).__name__,
+        )
+        profile["photo_url"] = ""
 
 
 def _validate_wizard_professional(professional):
