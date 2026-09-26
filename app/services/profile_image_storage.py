@@ -1,6 +1,11 @@
+import json
+import logging
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+
+
+logger = logging.getLogger(__name__)
 
 
 class ProfileImageStorageError(RuntimeError):
@@ -43,6 +48,22 @@ def upload_profile_image(*, supabase_url, service_role_key, bucket, object_path,
             if response.status not in {200, 201}:
                 raise ProfileImageStorageError("Supabase Storage rejected the upload.")
     except HTTPError as exc:
+        if exc.code == 400:
+            try:
+                response_data = json.loads(exc.read(4096).decode("utf-8"))
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                logger.warning("Supabase Storage upload rejected: status=%s", exc.code)
+            else:
+                if isinstance(response_data, dict):
+                    logger.warning(
+                        "Supabase Storage upload rejected: status=%s code=%s error=%s message=%s",
+                        exc.code,
+                        response_data.get("code"),
+                        response_data.get("error"),
+                        response_data.get("message"),
+                    )
+                else:
+                    logger.warning("Supabase Storage upload rejected: status=%s", exc.code)
         raise ProfileImageStorageError(
             f"Supabase Storage upload was rejected with HTTP {exc.code}."
         ) from exc
