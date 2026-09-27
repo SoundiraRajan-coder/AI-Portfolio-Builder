@@ -14,6 +14,13 @@ def create_app(config_class=Config):
     init_oauth(app)
     init_pool(app)
 
+    app.logger.info(
+        "Startup config check: DATABASE_URL=%s, GOOGLE_CLIENT_ID=%s, SUPABASE_URL=%s, GEMINI_API_KEY=%s",
+        "PRESENT" if app.config.get("DATABASE_URL") else "MISSING",
+        "PRESENT" if app.config.get("GOOGLE_CLIENT_ID") else "MISSING",
+        "PRESENT" if app.config.get("SUPABASE_URL") else "MISSING",
+        "PRESENT" if app.config.get("GEMINI_API_KEY") else "MISSING",
+    )
 
     from app.csrf import ensure_csrf_token, validate_csrf
     from app.routes.auth import auth_bp
