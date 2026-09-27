@@ -131,16 +131,6 @@ def upload_file():
         return jsonify({"success": False, "error": "Invalid upload type."}), 400
 
 
-
-
-
-
-
-
-
-
-
-
 @portfolios_bp.route("/new", methods=["GET", "POST"])
 @login_required
 def new_portfolio():
