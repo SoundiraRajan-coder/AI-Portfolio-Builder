@@ -157,7 +157,7 @@ atexit.register(_close_pool)
 
 def get_pool():
     global _pool
-    database_url = current_app.config.get("DATABASE_URL") or os.getenv("DATABASE_URL")
+    database_url = current_app.config.get("DATABASE_URL")
     if not database_url:
         raise DatabaseConfigurationError(
             "DATABASE_URL is not configured."
