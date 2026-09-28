@@ -38,6 +38,12 @@ PHOTO_TYPES = {
     ".webp": ("image/webp",),
 }
 ALLOWED_RESUME_EXTENSIONS = {".pdf", ".doc", ".docx"}
+RESUME_MAX_BYTES = 10 * 1024 * 1024
+RESUME_MIME_TYPES = {
+    ".pdf": "application/pdf",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
 
 
 def _valid_image_content(content, extension):
@@ -95,27 +101,34 @@ def upload_file():
     elif upload_type == "resume":
         if ext not in ALLOWED_RESUME_EXTENSIONS:
             return jsonify({"success": False, "error": f"Invalid resume format. Allowed formats: {', '.join(sorted(ALLOWED_RESUME_EXTENSIONS))}"}), 400
+        content = file.read(RESUME_MAX_BYTES + 1)
+        if len(content) > RESUME_MAX_BYTES:
+            return jsonify({"success": False, "error": "Resume file must be 10 MB or smaller."}), 413
+
+        content_type = RESUME_MIME_TYPES.get(ext) or file.mimetype or "application/octet-stream"
+        user_id = str(session["user_id"])
+        object_path = f"resumes/{user_id}/{uuid.uuid4().hex}{ext}"
+        try:
+            url = upload_profile_image(
+                supabase_url=current_app.config.get("SUPABASE_URL"),
+                service_role_key=current_app.config.get("SUPABASE_SERVICE_ROLE_KEY"),
+                bucket=current_app.config.get("SUPABASE_STORAGE_BUCKET"),
+                object_path=object_path,
+                content=content,
+                content_type=content_type,
+            )
+        except ProfileImageStorageError:
+            current_app.logger.exception("Resume upload failed")
+            return jsonify({"success": False, "error": "Resume upload failed."}), 500
+
+        return jsonify({
+            "success": True,
+            "url": url,
+            "filename": file.filename,
+            "type": upload_type,
+        }), 201
     else:
         return jsonify({"success": False, "error": "Invalid upload type."}), 400
-
-    user_id = str(session["user_id"])
-    try:
-        upload_dir = Path(current_app.root_path) / "static" / "uploads" / user_id
-        upload_dir.mkdir(parents=True, exist_ok=True)
-        unique_name = f"{upload_type}_{uuid.uuid4().hex[:12]}{ext}"
-        target_path = upload_dir / unique_name
-        file.save(str(target_path))
-    except OSError:
-        current_app.logger.exception("Resume upload failed")
-        return jsonify({"success": False, "error": "Resume upload failed."}), 500
-
-    url = f"/static/uploads/{user_id}/{unique_name}"
-    return jsonify({
-        "success": True,
-        "url": url,
-        "filename": file.filename,
-        "type": upload_type,
-    })
 
 
 @portfolios_bp.route("/new", methods=["GET", "POST"])
