@@ -253,9 +253,10 @@ def ai_edit_portfolio(portfolio_id):
         if not current_html:
             return jsonify({"status": "error", "message": "No portfolio design found to edit. Please generate your portfolio first."}), 400
 
-        updated_html, reply_message = edit_portfolio_html_with_ai(current_html, instruction)
+        wizard = builder_state.get("wizard", {})
+        updated_html, reply_message = edit_portfolio_html_with_ai(current_html, instruction, wizard_data=wizard)
         design_spec["custom_html"] = updated_html
-        validated = validate_portfolio_spec(design_spec, builder_state.get("wizard", {}))
+        validated = validate_portfolio_spec(design_spec, wizard)
         save_design_spec(session["user_id"], portfolio_id, instruction, validated)
 
         return jsonify({
