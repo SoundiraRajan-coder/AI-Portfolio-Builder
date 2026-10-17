@@ -127,7 +127,7 @@ def wizard_content(wizard):
         "skills": [_text(value, 100) for value in professional.get("skills", []) if _text(value, 100)],
         "education": _clean_records(professional.get("education"), ("degree", "institution", "start_year", "end_year", "grade", "description")),
         "experience": _clean_records(professional.get("experience"), ("job_title", "company_name", "employment_type", "start_date", "end_date", "location", "description", "responsibilities")),
-        "projects": _clean_records(portfolio.get("projects"), ("name", "short_description", "description", "technologies", "project_url", "repository_url", "demo_url", "start_date", "end_date", "key_features", "role")),
+        "projects": _clean_records(portfolio.get("projects"), ("name", "short_description", "description", "technologies", "project_url", "repository_url", "demo_url", "start_date", "end_date", "key_features", "role", "image_url")),
         "certifications": _clean_records(professional.get("certifications"), ("name", "issuing_organization")),
         "achievements": _clean_records(professional.get("achievements"), ("title", "description")),
         "services": _clean_records(portfolio.get("services"), ("name", "description")),

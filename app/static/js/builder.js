@@ -376,7 +376,7 @@ const addSkillsFromInput = () => {
 
 const createEmptyEducation = () => ({ id: generateUUID(), degree: "", institution: "", start_year: "", end_year: "", grade: "", description: "" });
 const createEmptyExperience = () => ({ id: generateUUID(), job_title: "", company_name: "", employment_type: "", start_date: "", end_date: "", currently_working: false, location: "", description: "", responsibilities: "" });
-const createEmptyProject = () => ({ id: generateUUID(), name: "", short_description: "", description: "", technologies: "", project_url: "", repository_url: "", demo_url: "", start_date: "", end_date: "", key_features: "", role: "" });
+const createEmptyProject = () => ({ id: generateUUID(), name: "", short_description: "", description: "", technologies: "", project_url: "", repository_url: "", demo_url: "", start_date: "", end_date: "", key_features: "", role: "", image_url: "" });
 const createEmptyCustomSection = () => ({ title: "", content: "" });
 
 const buildField = (labelText, inputEl, errorMessage = "", isFullWidth = false) => {
@@ -752,6 +752,7 @@ const renderProjects = () => {
             { label: "Short Tagline", field: "short_description", max: 500, placeholder: "e.g. Responsive modern portal for booking catering & events" },
             { label: "Technologies / Tech Stack", field: "technologies", max: 400, placeholder: "e.g. React, Node.js, MongoDB, TailwindCSS" },
             { label: "Your Role / Contribution", field: "role", max: 200, placeholder: "e.g. UI/UX Designer & Frontend Developer" },
+            { label: "Project Image / Screenshot URL (Optional)", field: "image_url", max: 500, placeholder: "https://... (leave blank for automatic AI illustration)" },
             { label: "Live Demo / Project URL", field: "project_url", max: 500, placeholder: "https://myproject.com" },
             { label: "GitHub Repository URL", field: "repository_url", max: 500, placeholder: "https://github.com/username/project" },
         ].forEach((item) => {

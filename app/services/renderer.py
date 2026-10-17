@@ -74,7 +74,7 @@ def _safe_content(content):
     content["other_links"] = [item for item in content.get("other_links", []) if _safe_url(item.get("url"))]
     for item in content.get("other_links", []): item["url"] = _safe_url(item.get("url"))
     for project in content.get("projects", []):
-        for key in ("project_url", "repository_url", "demo_url"): project[key] = _safe_url(project.get(key))
+        for key in ("project_url", "repository_url", "demo_url", "image_url"): project[key] = _safe_url(project.get(key))
     return content
 
 

@@ -793,6 +793,7 @@ def _validate_project_list(entries):
             "description": _text(entry.get("description"), "Detailed description", 2000),
             "technologies": _text(entry.get("technologies"), "Technologies", 400),
             "category": _text(entry.get("category"), "Category", 150),
+            "image_url": _text(entry.get("image_url") or entry.get("photo_url") or entry.get("image"), "Project Image URL", 500),
             "project_url": _text(entry.get("project_url"), "Project URL", 500),
             "repository_url": _text(entry.get("repository_url"), "Repository URL", 500),
             "demo_url": _text(entry.get("demo_url"), "Demo URL", 500),
