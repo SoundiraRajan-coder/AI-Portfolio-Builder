@@ -387,80 +387,126 @@ def _clean_data_dict(data: dict) -> dict:
     return cleaned
 
 
+import urllib.parse
+import hashlib
+
+def _build_project_visual_prompt(project: dict, index: int = 0) -> tuple[str, str]:
+    """Analyze any project's text corpus and return:
+    (dynamic_ai_image_url, backup_unsplash_url)"""
+    name = (project.get("name") or project.get("title") or "").strip()
+    short_desc = (project.get("short_description") or "").strip()
+    desc = (project.get("description") or project.get("summary") or "").strip()
+    tech = (project.get("technologies") or "").strip()
+    category = (project.get("category") or "").strip()
+    features = (project.get("key_features") or "").strip()
+    role = (project.get("role") or "").strip()
+
+    combined_lower = f"{name} {short_desc} {desc} {tech} {category} {features} {role}".lower()
+
+    # Pre-verified high-resolution backup Unsplash URLs by archetype
+    backup_urls = {
+        "computer_vision": "https://images.unsplash.com/photo-1520919971261-fe0be1461d0b?w=900&auto=format&fit=crop&q=80",
+        "laboratory": "https://images.unsplash.com/photo-1476365518243-f738bf58443d?w=900&auto=format&fit=crop&q=80",
+        "music": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=900&auto=format&fit=crop&q=80",
+        "fitness": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&auto=format&fit=crop&q=80",
+        "food": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=900&auto=format&fit=crop&q=80",
+        "gaming": "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=900&auto=format&fit=crop&q=80",
+        "medical": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=900&auto=format&fit=crop&q=80",
+        "real_estate": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&auto=format&fit=crop&q=80",
+        "robotics": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=900&auto=format&fit=crop&q=80",
+        "fintech": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=900&auto=format&fit=crop&q=80",
+        "ecommerce": "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=900&auto=format&fit=crop&q=80",
+        "mobile": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=900&auto=format&fit=crop&q=80",
+        "cloud": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900&auto=format&fit=crop&q=80",
+        "cybersecurity": "https://images.unsplash.com/photo-1563089145-599997674d42?w=900&auto=format&fit=crop&q=80",
+        "web": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&auto=format&fit=crop&q=80",
+        "general": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=900&auto=format&fit=crop&q=80",
+    }
+
+    # Determine specific visual scene and backup
+    if any(k in combined_lower for k in ["nano", "micro", "microscope", "cellular", "particle", "cell count"]):
+        scene = "high tech laboratory microscope computer vision inspection screen micro particles tracking analysis"
+        backup = backup_urls["laboratory"]
+    elif any(k in combined_lower for k in ["yolo", "opencv", "object detection", "pedestrian", "traffic detection", "vehicle detection", "bounding box", "traffic monitoring"]):
+        scene = "urban city street intersection with cars bicycles pedestrians dashcam computer vision view"
+        backup = backup_urls["computer_vision"]
+    elif any(k in combined_lower for k in ["music", "audio", "sound", "synthesizer", "daw", "podcast", "instrument", "album"]):
+        scene = "modern digital audio workstation music production recording studio sound mixing console synthesizer"
+        backup = backup_urls["music"]
+    elif any(k in combined_lower for k in ["fitness", "gym", "workout", "exercise", "calorie", "diet", "bodybuilding", "running", "yoga"]):
+        scene = "modern fitness gym workout training health tracking mobile app interface lifestyle"
+        backup = backup_urls["fitness"]
+    elif any(k in combined_lower for k in ["food", "restaurant", "cafe", "coffee", "recipe", "dining", "bakery", "catering", "pizza"]):
+        scene = "gourmet artisan food dining culinary aesthetic cafe restaurant ambiance"
+        backup = backup_urls["food"]
+    elif any(k in combined_lower for k in ["game", "gaming", "unity", "unreal", "rpg", "esports", "gameloop"]):
+        scene = "immersive 3D futuristic video game environment virtual fantasy sci-fi world"
+        backup = backup_urls["gaming"]
+    elif any(k in combined_lower for k in ["health", "medical", "doctor", "hospital", "patient", "clinic", "telemedicine", "pharma"]):
+        scene = "modern clean medical clinic healthcare technology digital hospital interface"
+        backup = backup_urls["medical"]
+    elif any(k in combined_lower for k in ["real estate", "property", "realty", "house", "apartment", "architecture", "interior"]):
+        scene = "luxury modern architectural residential home interior design real estate showcase"
+        backup = backup_urls["real_estate"]
+    elif any(k in combined_lower for k in ["drone", "aerospace", "aviation", "flight", "satellite"]):
+        scene = "high tech autonomous aerial drone flying over modern landscape technology"
+        backup = backup_urls["robotics"]
+    elif any(k in combined_lower for k in ["robot", "robotics", "arduino", "raspberry", "sensor", "iot", "embedded"]):
+        scene = "advanced robotics engineering laboratory high tech hardware automation bench"
+        backup = backup_urls["robotics"]
+    elif any(k in combined_lower for k in ["crypto", "blockchain", "bitcoin", "ethereum", "web3", "solana", "defi", "wallet"]):
+        scene = "futuristic fintech digital blockchain network decentralized glowing technology"
+        backup = backup_urls["fintech"]
+    elif any(k in combined_lower for k in ["ecommerce", "shop", "store", "cart", "clothing", "fashion", "boutique"]):
+        scene = "modern stylish retail fashion product showcase sleek digital shopping experience"
+        backup = backup_urls["ecommerce"]
+    elif any(k in combined_lower for k in ["nlp", "llm", "chatbot", "chat", "langchain", "gpt", "rag"]):
+        scene = "futuristic artificial intelligence neural network glowing core digital communication"
+        backup = backup_urls["general"]
+    elif any(k in combined_lower for k in ["analytics", "dashboard", "metrics", "data science", "tableau", "bi"]):
+        scene = "futuristic dark data analytics dashboard glowing financial charts graphs metrics"
+        backup = backup_urls["web"]
+    elif any(k in combined_lower for k in ["cloud", "devops", "docker", "kubernetes", "aws", "server"]):
+        scene = "modern high tech server room glowing datacenter cloud network infrastructure"
+        backup = backup_urls["cloud"]
+    elif any(k in combined_lower for k in ["mobile", "android", "ios", "flutter", "react native", "swift"]):
+        scene = "modern smartphone mobile app interface user experience design in hand"
+        backup = backup_urls["mobile"]
+    elif any(k in combined_lower for k in ["security", "cyber", "firewall", "penetration", "auth"]):
+        scene = "cybersecurity digital cyber shield terminal security matrix interface"
+        backup = backup_urls["cybersecurity"]
+    else:
+        # Extract meaningful subject terms from name & description
+        raw_text = f"{name} {short_desc or desc}".strip()
+        words = re.findall(r'[a-zA-Z0-9]+', raw_text)
+        stopwords = {
+            'a', 'an', 'the', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'of', 'is', 'it',
+            'my', 'built', 'using', 'designed', 'system', 'project', 'application', 'app', 'platform',
+            'web', 'user', 'users', 'various', 'help', 'helps', 'based', 'features', 'developed', 'management'
+        }
+        filtered = [w for w in words if w.lower() not in stopwords]
+        subject = " ".join(filtered[:8]) if filtered else name
+        scene = f"modern professional high quality {subject} concept, clean aesthetic"
+        backup = backup_urls["general"]
+
+    full_prompt = f"photorealistic {scene}, 8k resolution, cinematic lighting, sharp focus, professional photography"
+    encoded_prompt = urllib.parse.quote(full_prompt)
+    seed = int(hashlib.md5(f"{name}_{index}".encode("utf-8")).hexdigest()[:6], 16) % 100000
+
+    dynamic_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=900&height=600&nologo=true&seed={seed}"
+    return dynamic_url, backup
+
+
 def _resolve_project_images(projects: list[dict]) -> list[dict]:
-    """Inspect project items, categorize them based on keywords in title/description/technologies/role/key_features,
-    and dynamically assign high-resolution, unique, domain-relevant Unsplash images so that no two projects
-    share the same image and each project gets an authentically matching illustration."""
+    """Inspect project items, dynamically analyze project description and domain keywords,
+    and assign an authentically matching AI-illustrated or photography image URL tailored
+    to that exact project topic (computer vision, music, fitness, food, gaming, health, etc.)."""
     if not isinstance(projects, list):
         return []
 
-    domain_pools = {
-        "computer_vision": [
-            "https://images.unsplash.com/photo-1520919971261-fe0be1461d0b?w=900&auto=format&fit=crop&q=80",  # Real-time YOLO object detection & tracking
-            "https://images.unsplash.com/photo-1634646493821-9fca74f85f59?w=900&auto=format&fit=crop&q=80",  # Instance segmentation & visual detection matrix
-            "https://images.unsplash.com/photo-1530652101053-8c0db4fbb5de?w=900&auto=format&fit=crop&q=80",  # Camera optical lens & visual stream
-            "https://images.unsplash.com/photo-1476365518243-f738bf58443d?w=900&auto=format&fit=crop&q=80",  # Microscopic & nano object inspection bench
-            "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=900&auto=format&fit=crop&q=80",  # Cyber visual matrix & stream
-        ],
-        "nlp_llm": [
-            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=900&auto=format&fit=crop&q=80",  # Neural network 3D flow
-            "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=900&auto=format&fit=crop&q=80",  # AI glowing neural core
-            "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=900&auto=format&fit=crop&q=80",  # Deep learning neural node graph
-        ],
-        "machine_learning": [
-            "https://images.unsplash.com/photo-1555255707-c07966088b7b?w=900&auto=format&fit=crop&q=80",  # Deep learning AI silicon microprocessor architecture
-            "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=900&auto=format&fit=crop&q=80",  # AI glowing neural core
-            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=900&auto=format&fit=crop&q=80",  # Neural network 3D flow
-            "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=900&auto=format&fit=crop&q=80",  # Connected node graph
-        ],
-        "data_analytics": [
-            "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=900&auto=format&fit=crop&q=80",  # Financial & data analytics dark dashboard
-            "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=900&auto=format&fit=crop&q=80",  # Data charts and BI dashboard metrics
-            "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&auto=format&fit=crop&q=80",  # Modern SaaS analytics graphs
-        ],
-        "web_saas": [
-            "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&auto=format&fit=crop&q=80",  # Modern SaaS web platform dashboard
-            "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=900&auto=format&fit=crop&q=80",  # Clean responsive web application
-            "https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=900&auto=format&fit=crop&q=80",  # Modern web UI/UX layout
-        ],
-        "mobile": [
-            "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=900&auto=format&fit=crop&q=80",  # Mobile smartphone app in hand
-            "https://images.unsplash.com/photo-1526470608268-f674ce90ebd4?w=900&auto=format&fit=crop&q=80",  # Mobile UX layout
-            "https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?w=900&auto=format&fit=crop&q=80",  # Mobile screen interface
-        ],
-        "cloud_backend": [
-            "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900&auto=format&fit=crop&q=80",  # Cloud server racks datacenter
-            "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&auto=format&fit=crop&q=80",  # Global cloud network matrix
-            "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=900&auto=format&fit=crop&q=80",  # High-speed server mesh infrastructure
-        ],
-        "fintech_crypto": [
-            "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=900&auto=format&fit=crop&q=80",  # Financial analytics & growth
-            "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=900&auto=format&fit=crop&q=80",  # Decentralized blockchain & crypto network
-        ],
-        "ecommerce": [
-            "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=900&auto=format&fit=crop&q=80",  # Financial & commerce analytics
-            "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=900&auto=format&fit=crop&q=80",  # Digital shopping & mobile payments
-        ],
-        "robotics_iot": [
-            "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=900&auto=format&fit=crop&q=80",  # Robotics automation arm
-            "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=900&auto=format&fit=crop&q=80",  # Hardware circuit board & microchips
-            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900&auto=format&fit=crop&q=80",  # Smart testing hardware bench
-        ],
-        "cybersecurity": [
-            "https://images.unsplash.com/photo-1563089145-599997674d42?w=900&auto=format&fit=crop&q=80",  # Cybersecurity cyber shield
-            "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=900&auto=format&fit=crop&q=80",  # Security terminal code matrix
-        ],
-        "software_general": [
-            "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=900&auto=format&fit=crop&q=80",  # Modern dark code editor with syntax highlighting
-            "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=900&auto=format&fit=crop&q=80",  # Clean developer laptop coding setup
-            "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900&auto=format&fit=crop&q=80",  # Professional engineering workspace
-        ],
-    }
-
-    used_images = set()
     enhanced_projects = []
 
-    for proj in projects:
+    for idx, proj in enumerate(projects):
         p_copy = dict(proj)
         existing_img = p_copy.get("image_url") or p_copy.get("photo_url") or p_copy.get("image")
         if existing_img and isinstance(existing_img, str) and existing_img.strip():
@@ -469,104 +515,12 @@ def _resolve_project_images(projects: list[dict]) -> list[dict]:
             if "photo-1507146426996-ef05306b995a" in clean_url:
                 clean_url = "https://images.unsplash.com/photo-1520919971261-fe0be1461d0b?w=900&auto=format&fit=crop&q=80"
             p_copy["image_url"] = clean_url
-            used_images.add(clean_url)
             enhanced_projects.append(p_copy)
             continue
 
-        text_corpus = (
-            f"{p_copy.get('name', '')} {p_copy.get('title', '')} "
-            f"{p_copy.get('short_description', '')} {p_copy.get('summary', '')} "
-            f"{p_copy.get('description', '')} {p_copy.get('key_features', '')} "
-            f"{p_copy.get('role', '')} {p_copy.get('technologies', '')} "
-            f"{p_copy.get('category', '')}"
-        ).lower()
-
-        # Specific domains first to avoid general words overriding specialized projects
-        if any(w in text_corpus for w in [
-            "vision", "opencv", "yolo", "detect", "detection", "tracking", "counter",
-            "nano counter", "camera", "segmentation", "optical", "image processing",
-            "video stream", "bounding box", "cuda", "microscope", "micro", "nano",
-            "facial recognition", "object recognition"
-        ]):
-            pool_key = "computer_vision"
-        elif any(w in text_corpus for w in [
-            "nlp", "llm", "gpt", "gemini", "langchain", "transformer", "chatbot",
-            "chat", "conversational", "rag", "vector database", "embedding", "prompt engineering",
-            "natural language", "bert", "text generation"
-        ]):
-            pool_key = "nlp_llm"
-        elif any(w in text_corpus for w in [
-            "machine learning", "deep learning", "neural", "pytorch", "tensorflow",
-            "keras", "scikit", "ai model", "artificial intelligence", "model training",
-            "classifier", "neural net", "reinforcement"
-        ]):
-            pool_key = "machine_learning"
-        elif any(w in text_corpus for w in [
-            "robot", "robotics", "iot", "arduino", "raspberry", "sensor", "hardware",
-            "embedded", "microcontroller", "drone", "automation arm", "stm32", "esp32"
-        ]):
-            pool_key = "robotics_iot"
-        elif any(w in text_corpus for w in [
-            "security", "cyber", "cybersecurity", "auth", "authentication", "penetration",
-            "vulnerability", "shield", "firewall", "hacker", "encryption", "oauth", "jwt"
-        ]):
-            pool_key = "cybersecurity"
-        elif any(w in text_corpus for w in [
-            "crypto", "blockchain", "bitcoin", "ethereum", "web3", "solana", "defi",
-            "wallet", "fintech", "finance", "bank", "banking", "trading", "stock"
-        ]):
-            pool_key = "fintech_crypto"
-        elif any(w in text_corpus for w in [
-            "mobile", "android", "ios", "flutter", "react native", "swift", "kotlin",
-            "smartphone", "iphone", "apk", "mobile app"
-        ]):
-            pool_key = "mobile"
-        elif any(w in text_corpus for w in [
-            "shop", "store", "ecommerce", "e-commerce", "cart", "checkout", "retail",
-            "order", "catalog", "stripe", "paypal", "booking", "catering", "reservation"
-        ]):
-            pool_key = "ecommerce"
-        elif any(w in text_corpus for w in [
-            "cloud", "devops", "docker", "kubernetes", "k8s", "aws", "gcp", "azure",
-            "server", "backend", "microservice", "ci/cd", "pipeline", "linux", "database",
-            "sql", "postgresql", "mysql", "mongodb", "redis", "fastapi", "django", "flask",
-            "express", "spring boot", "graphql", "rest api"
-        ]):
-            pool_key = "cloud_backend"
-        elif any(w in text_corpus for w in [
-            "analytics", "dashboard", "data analysis", "data science", "metrics",
-            "visualization", "tableau", "power bi", "pandas", "numpy", "matplotlib",
-            "seaborn", "charts", "reporting", "forecast", "prediction", "business intelligence"
-        ]):
-            pool_key = "data_analytics"
-        elif any(w in text_corpus for w in [
-            "web", "website", "portal", "react", "vue", "angular", "next.js", "nextjs",
-            "nuxt", "full stack", "fullstack", "frontend", "saas", "platform", "tailwind",
-            "css", "html", "ui/ux", "landing page"
-        ]):
-            pool_key = "web_saas"
-        else:
-            pool_key = "software_general"
-
-        candidates = domain_pools.get(pool_key, domain_pools["software_general"])
-        assigned_img = None
-        for img in candidates:
-            if img not in used_images:
-                assigned_img = img
-                break
-        if not assigned_img:
-            for any_pool in domain_pools.values():
-                for img in any_pool:
-                    if img not in used_images:
-                        assigned_img = img
-                        break
-                if assigned_img:
-                    break
-        if not assigned_img:
-            assigned_img = candidates[0]
-
-        used_images.add(assigned_img)
-        p_copy["image_url"] = assigned_img
+        dynamic_url, backup_url = _build_project_visual_prompt(p_copy, idx)
+        p_copy["image_url"] = dynamic_url
+        p_copy["backup_image_url"] = backup_url
         enhanced_projects.append(p_copy)
 
     return enhanced_projects
@@ -809,7 +763,7 @@ def edit_portfolio_html_with_ai(current_html: str, user_instruction: str) -> tup
         "   - Re-theme the ENTIRE page: body background, navbar, hero glow orbs, card backgrounds, borders, gradient titles, badges, and button styles to match that exact aesthetic.\n"
         "   - For 'milk green' / 'mint green': Use background `#04150e` / `#061d14`, card background `bg-[#0a2c20]/70 backdrop-blur-xl border border-emerald-400/30`, gradients `from-emerald-300 via-teal-200 to-green-300`, glow effects `shadow-emerald-500/20`.\n"
         "2. SMOOTH ANIMATIONS: Incorporate smooth hover transitions (`hover:-translate-y-2 hover:shadow-2xl transition-all duration-500`), image scale on hover (`group-hover:scale-105 duration-700`), and floating keyframe animation classes.\n"
-        "3. PROJECT PHOTOS: Assign high-resolution, domain-matching Unsplash photography matching the project's real context. NEVER use photos of animals, pets, nature, or unrelated topics.\n"
+        "3. PROJECT PHOTOS & VISUALS (CRITICAL):\n""   - The project photo MUST authentically match the actual project subject and domain.\n""   - If the project is about computer vision / vehicle / pedestrian detection (like YOLO), use a real street/traffic image with cars and pedestrians (e.g. `https://images.unsplash.com/photo-1520919971261-fe0be1461d0b?w=900&auto=format&fit=crop&q=80`). NEVER place detection boxes on mountains, clouds, or nature landscapes!\n""   - For any project (whether software, AI, audio, fitness, food, gaming, health, etc.), assign an authentic image representing that exact topic, or use dynamic AI generation via `https://image.pollinations.ai/prompt/{encoded_visual_description}?width=900&height=600&nologo=true`.\n""   - NEVER use photos of pets, animals, or unrelated nature landscapes unless the project is specifically about that subject.\n"
         "4. PRESERVE all existing data, sections, and links unless explicitly asked to modify them.\n"
         "5. STRICT NO EMOJIS in code.\n\n"
         "=== CURRENT HTML DOCUMENT TO MODIFY ===\n"
